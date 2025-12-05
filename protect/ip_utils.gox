@@ -1,0 +1,24 @@
+package protect
+
+import (
+	"net"
+	"net/http"
+	"strings"
+)
+
+// GetIP extracts a stable IP string from the request.
+// It avoids trusting X-Forwarded-For by default.
+func GetIP(r *http.Request) string {
+	// Prefer RemoteAddr
+	hostPort := r.RemoteAddr
+	if hostPort == "" {
+		return ""
+	}
+	// Split host:port
+	host, _, err := net.SplitHostPort(hostPort)
+	if err != nil {
+		// maybe no port, return as-is but strip any leading brackets
+		return strings.Trim(hostPort, "[]")
+	}
+	return host
+}

@@ -1,0 +1,21 @@
+=== TEST: valid registration
+PASS: got status 201 -- body={"id":49,"username":"test_register_valid"}
+
+DB: username test_register_valid exists
+=== TEST: missing username
+PASS: got status 400 -- body={"message":"username and password required","status":"error"}
+
+=== TEST: missing password
+PASS: got status 400 -- body={"message":"username and password required","status":"error"}
+
+=== TEST: invalid json
+PASS: got status 400 -- body={"message":"invalid json","status":"error"}
+
+=== TEST: duplicate username
+first registration status=201 body={"id":50,"username":"test_register_dup"}
+
+PASS: got status 409 (body={"message":"username already taken","status":"error"}
+) 
+DB: username test_register_dup exists
+=== SUMMARY ===
+OK: all tests passed

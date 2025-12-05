@@ -1,0 +1,84 @@
+package protect
+
+import (
+	"sync"
+	"time"
+)
+
+// RateLimiter is a tiny fixed-window per-key limiter.
+type RateLimiter struct {
+	mu          sync.Mutex
+	entries     map[string]*ipEntry
+	maxRequests int
+	window      time.Duration
+	// cleanup threshold for stale entries
+	staleAfter time.Duration
+}
+
+type ipEntry struct {
+	count       int
+	windowStart time.Time
+	// lastSeen helps GC stale entries
+	lastSeen time.Time
+}
+
+// NewRateLimiter creates a limiter allowing maxRequests per window.
+func NewRateLimiter(maxRequests int, window time.Duration) *RateLimiter {
+	return &RateLimiter{
+		entries:     make(map[string]*ipEntry),
+		maxRequests: maxRequests,
+		window:      window,
+		staleAfter:  window * 30, // entries not touched for 30 windows are removed
+	}
+}
+
+// Allow reports whether key (ip) is allowed to proceed.
+// It also updates internal counters. Thread-safe.
+func (rl *RateLimiter) Allow(key string) bool {
+	now := time.Now()
+
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	// GC: remove stale entries from time to time
+	if len(rl.entries) > 1000 { // avoid doing GC on very small maps
+		for k, e := range rl.entries {
+			if now.Sub(e.lastSeen) > rl.staleAfter {
+				delete(rl.entries, k)
+			}
+		}
+	}
+
+	e, ok := rl.entries[key]
+	if !ok {
+		rl.entries[key] = &ipEntry{count: 1, windowStart: now, lastSeen: now}
+		return true
+	}
+
+	// reset window if expired
+	if now.Sub(e.windowStart) >= rl.window {
+		e.windowStart = now
+		e.count = 1
+		e.lastSeen = now
+		return true
+	}
+
+	// same window
+	if e.count > rl.maxRequests {
+		e.lastSeen = now
+		return false
+	}
+	e.count++
+	e.lastSeen = now
+	return true
+}
+
+// Inspect returns current state for a key (debug only). Copy of values.
+func (rl *RateLimiter) Inspect(key string) (count int, started time.Time, found bool) {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	if e, ok := rl.entries[key]; ok {
+		return e.count, e.windowStart, true
+	}
+	return 0, time.Time{}, false
+}
