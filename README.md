@@ -2,6 +2,8 @@
 
 This is a minimal RESTful API server (backend) in Go:
 
+- the Go stdlib router, no chi,
+
 - username and password authentication with session cookies,
 
 - request rate limiter per IP to fight evil,
@@ -11,11 +13,6 @@ This is a minimal RESTful API server (backend) in Go:
 - a builder to store default params**,** dropped config structs and functional options: [1](https://www.reddit.com/r/golang/comments/5ky6sf/the_functional_options_pattern/), [2](https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html), [3](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis), [4](https://www.youtube.com/watch?v=MDy7JQN5MN4), but discarded both,
 
 - [Mat Ryer's graceful ctrl+C shutdown](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/).
-
-- Only standard Go stdlib router, no chi,
-  ```bash
-  go version go1.24.10 linux/amd64
-  ```
 
 ## Motivation
 
@@ -108,7 +105,7 @@ Ask AI to write an industrial grade IP rate limiter, but bear in mind those code
 
 ## Some Food for Thought
 
-- A long time Go proponent Anthony GG uses [Remix with Supabase](https://www.youtube.com/watch?v=rlJx5f5OlYA&t=791s) in his latest projects. Go is still somewhere on the server side, but not with DB and VPS all the way, and no PocketBase either. When it comes to grinding for money, no time for ideals.
+- A long time Go proponent Anthony GG uses [Remix with Supabase](https://www.youtube.com/watch?v=rlJx5f5OlYA&t=791s) in his latest projects. Go is still somewhere on the server side, but not with DB and VPS all the way, and no PocketBase either.
 
 - Ultimately, the goal is to build useful no nonsense services, like eBay, [vinted.lt](https://www.vinted.lt/), [barbora.lt](https://barbora.lt/)...
 
