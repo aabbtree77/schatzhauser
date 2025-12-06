@@ -1,16 +1,14 @@
 ## schatzhauser
 
-This is a RESTful API example in Go:
+This is a minimal RESTful API server (backend) in Go:
 
 - username and password authentication with session cookies,
 
 - request rate limiter per IP to fight evil,
 
-- the "middleware" is the Go code inside a request handler, no chaining pains; KISS, Do Repeat Yourself,
+- "middleware" is just Go inside a request handler, Do Repeat Yourself,
 
-- a simple builder pattern to store default params,
-
-- have thought about using just a config struct, and the functional options pattern: [1](https://www.reddit.com/r/golang/comments/5ky6sf/the_functional_options_pattern/), [2](https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html), [3](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis), [4](https://www.youtube.com/watch?v=MDy7JQN5MN4), but discarded both,
+- a builder to store default params**,** dropped config structs and functional options: [1](https://www.reddit.com/r/golang/comments/5ky6sf/the_functional_options_pattern/), [2](https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html), [3](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis), [4](https://www.youtube.com/watch?v=MDy7JQN5MN4), but discarded both,
 
 - [Mat Ryer's graceful ctrl+C shutdown](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/).
 
@@ -18,10 +16,6 @@ This is a RESTful API example in Go:
   ```bash
   go version go1.24.10 linux/amd64
   ```
-
-This is already usable, with independent tests (self-sufficient Go programs, no import "testing").
-
-Not yet ready to fight the bots.
 
 ## Motivation
 
@@ -116,10 +110,8 @@ Ask AI to write an industrial grade IP rate limiter, but bear in mind those code
 
 - A long time Go proponent Anthony GG uses [Remix with Supabase](https://www.youtube.com/watch?v=rlJx5f5OlYA&t=791s) in his latest projects. Go is still somewhere on the server side, but not with DB and VPS all the way, and no PocketBase either. When it comes to grinding for money, no time for ideals.
 
-- Ultimately, the goal is to build useful no nonsense services, like eBay, [vinted.lt](https://www.vinted.lt/), [barbora.lt](https://barbora.lt/)... They have a purpose.
+- Ultimately, the goal is to build useful no nonsense services, like eBay, [vinted.lt](https://www.vinted.lt/), [barbora.lt](https://barbora.lt/)...
 
 - Js/Ts apps slowly leak memory, see [this case by Web Dev Cody](https://youtu.be/gNDBwxeBrF4?t=176), but nobody cares.
 
 - Even Rob Pike does ["Java design patterns"](https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html) at times, but he does have [better stuff](https://www.youtube.com/watch?v=oV9rvDllKEg&t=327s).
-
-- Go lacks succinctness. I wanted to use config.go file for the user parameter setup directly, without any configuration file formats. Yet \*.toml with a parser is more ergonomic than dealing with Go's struct literals.
