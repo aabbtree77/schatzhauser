@@ -24,14 +24,11 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 	}
+
+	// Setup logging: passing in *cfg to read cfg.Debug from toml
+	// and set stdout to text (debug=true) or json (debug=false)
 	logger.Init(*cfg)
 	logger.Info("starting schatzhauser", "debug", cfg.Debug)
-
-	// Build rate limiters
-	registerIPRLimiter := config.BuildIPRLimiter(cfg.IPRateLimiter.Register)
-	loginIPRLimiter := config.BuildIPRLimiter(cfg.IPRateLimiter.Login)
-	logoutIPRLimiter := config.BuildIPRLimiter(cfg.IPRateLimiter.Logout)
-	profileIPRLimiter := config.BuildIPRLimiter(cfg.IPRateLimiter.Profile)
 
 	// -----------------------------------------------------
 	// Database (SQLite)
@@ -59,7 +56,7 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	// -----------------------------------------------------
 	mux := http.NewServeMux()
 
-	registerRoutes(mux, db, registerIPRLimiter, loginIPRLimiter, logoutIPRLimiter, profileIPRLimiter)
+	registerRoutes(mux, db, cfg)
 
 	srv := &http.Server{
 		Addr:         ":8080",

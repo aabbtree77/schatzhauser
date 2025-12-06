@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/aabbtree77/schatzhauser/config"
+	"github.com/aabbtree77/schatzhauser/logger"
 )
 
 type TestCase struct {
@@ -72,6 +75,21 @@ func registerTempUser(username, password string) error {
 }
 
 func main() {
+
+	//Disable the ip rate limiter for this test
+
+	// Load configuration
+	cfg, err := config.LoadConfig("config.toml")
+	if err != nil {
+		logger.Error("failed to load config", "err", err)
+	}
+
+	if cfg.IPRateLimiter.Register.Enable || cfg.IPRateLimiter.Login.Enable {
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.register]")
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.login]")
+		os.Exit(1)
+	}
+
 	username := fmt.Sprintf("login_test_%d", time.Now().UnixNano())
 	password := "secret123"
 

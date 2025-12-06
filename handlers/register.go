@@ -26,13 +26,15 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	/*
+
+	if h.IPRLimiter.Enable {
 		ip := protect.GetIP(r)
 		if ip != "" && !h.IPRLimiter.Allow(ip) {
 			tooManyRequests(w)
 			return
 		}
-	*/
+	}
+
 	var in RegisterInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		badRequest(w, "invalid json")

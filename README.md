@@ -95,7 +95,7 @@ Ask AI to write an industrial grade IP rate limiter, but bear in mind the codes 
 
 - [ ] Maximal number of registered accounts per IP.
 
-- [ ] Proof of work to slow down spam bots.
+- [ ] Proof of work to make spam not viable economically.
 
 - [ ] HTTP request body size limiter.
 

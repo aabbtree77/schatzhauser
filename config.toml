@@ -1,22 +1,26 @@
-debug = true
+debug = false
 dbpath = "./data/data.db"
 
 # At most 5 registration attempts per minute per IP
 [ip_rate_limiter.register]
-threshold = 5
+enable = false
+max_requests = 5
 window_ms = 60000
 
 # At most 10 login attempts per minute per IP
 [ip_rate_limiter.login]
-threshold = 10
-window_ms = 60000
+enable = false
+max_requests = 15
+window_ms = 10000
 
 # At most 1 profile request/second per IP
 [ip_rate_limiter.profile]
-threshold = 1
+enable = false
+max_requests = 1
 window_ms = 1000
 
 # At most 10 logout attempts per minute per IP
 [ip_rate_limiter.logout]
-threshold = 10
+enable = false
+max_requests = 10
 window_ms = 60000

@@ -1,15 +1,13 @@
 package config
 
 import (
-	"time"
-
 	"github.com/BurntSushi/toml"
-	"github.com/aabbtree77/schatzhauser/protect"
 )
 
 type IPRateLimiterSection struct {
-	Threshold int `toml:"threshold"`
-	WindowMS  int `toml:"window_ms"`
+	Enable      bool `toml:"enable"`
+	MaxRequests int  `toml:"max_requests"`
+	WindowMS    int  `toml:"window_ms"`
 }
 
 type IPRateLimiterConfig struct {
@@ -32,12 +30,4 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
-}
-
-// Convert section → actual IPRateLimiter instance using builder API.
-func BuildIPRLimiter(sec IPRateLimiterSection) *protect.IPRateLimiter {
-	return protect.NewIPRateLimiter().
-		MaxRequests(sec.Threshold).
-		Window(time.Duration(sec.WindowMS) * time.Millisecond).
-		Build()
 }

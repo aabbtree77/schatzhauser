@@ -10,6 +10,9 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/aabbtree77/schatzhauser/config"
+	"github.com/aabbtree77/schatzhauser/logger"
 )
 
 func must(err error) {
@@ -88,6 +91,23 @@ func runTestProfile() bool {
 }
 
 func main() {
+
+	//Disable the ip rate limiter for this test
+
+	// Load configuration
+	cfg, err := config.LoadConfig("config.toml")
+	if err != nil {
+		logger.Error("failed to load config", "err", err)
+	}
+
+	if cfg.IPRateLimiter.Register.Enable || cfg.IPRateLimiter.Login.Enable || cfg.IPRateLimiter.Profile.Enable || cfg.IPRateLimiter.Logout.Enable {
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.register]")
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.login]")
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.profile]")
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.logout]")
+		os.Exit(1)
+	}
+
 	passed := 0
 	if runTestProfile() {
 		passed++

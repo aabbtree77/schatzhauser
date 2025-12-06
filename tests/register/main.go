@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/aabbtree77/schatzhauser/config"
+	"github.com/aabbtree77/schatzhauser/logger"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -42,6 +44,20 @@ type result struct {
 }
 
 func main() {
+
+	//Disable the ip rate limiter for this test
+
+	// Load configuration
+	cfg, err := config.LoadConfig("config.toml")
+	if err != nil {
+		logger.Error("failed to load config", "err", err)
+	}
+
+	if cfg.IPRateLimiter.Register.Enable {
+		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.register]")
+		os.Exit(1)
+	}
+
 	// ensure tests log dir exists
 	if err := os.MkdirAll(logFolder, 0o755); err != nil {
 		fmt.Fprintf(os.Stderr, "mkdir log folder: %v\n", err)

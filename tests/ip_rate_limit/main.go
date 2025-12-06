@@ -8,6 +8,9 @@ import (
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/aabbtree77/schatzhauser/config"
+	"github.com/aabbtree77/schatzhauser/logger"
 )
 
 const (
@@ -47,9 +50,22 @@ func doLogin(username, password string) (int, string, error) {
 }
 
 func main() {
+
 	// parameters must match [ip_rate_limiter.login] in config.toml
-	threshold := 10
-	window := 60 * time.Second
+
+	// Load configuration
+	cfg, err := config.LoadConfig("config.toml")
+	if err != nil {
+		logger.Error("failed to load config", "err", err)
+	}
+
+	if !cfg.IPRateLimiter.Login.Enable {
+		fmt.Println("Make sure enable is true inside config.toml [ip_rate_limiter.login]")
+		os.Exit(1)
+	}
+
+	threshold := cfg.IPRateLimiter.Login.MaxRequests
+	window := time.Duration(cfg.IPRateLimiter.Login.WindowMS) * time.Millisecond
 
 	user := fmt.Sprintf("ratelimit_test_%d", time.Now().UnixNano())
 	//user := "test_register_valid"

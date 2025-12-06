@@ -20,10 +20,12 @@ func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ip := protect.GetIP(r)
-	if ip != "" && !h.IPRLimiter.Allow(ip) {
-		tooManyRequests(w)
-		return
+	if h.IPRLimiter.Enable {
+		ip := protect.GetIP(r)
+		if ip != "" && !h.IPRLimiter.Allow(ip) {
+			tooManyRequests(w)
+			return
+		}
 	}
 
 	// Validate session cookie & fetch session row
