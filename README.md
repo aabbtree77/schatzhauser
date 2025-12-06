@@ -85,8 +85,6 @@ go run ./tests/logout
 go run ./tests/ip_rate_limit
 ```
 
-Comment out the IP rate limiters when testing anything but `ip_rate_limit`. In the latter, make sure config.toml [ip_rate_limiter.login] section params match the ones at the start of func main() inside tests/ip_rate_limit/main.go.
-
 The IP rate limiter is a simple-looking fixed window counter, but it is already the second version as the first one leaked memory. Tricky...
 
 Ask AI to write an industrial grade IP rate limiter, but bear in mind the codes which are hard to understand will be even harder to debug, so I follow KISS here.
@@ -101,4 +99,4 @@ Ask AI to write an industrial grade IP rate limiter, but bear in mind the codes 
 
 - [ ] Session expiry.
 
-- [ ] IP bans.
+- [ ] Black listing IPs.
