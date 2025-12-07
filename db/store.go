@@ -23,3 +23,10 @@ func NewStore(db *sql.DB) *Store {
 func (s *Store) DB() *sql.DB {
 	return s.db
 }
+
+func (s *Store) WithTx(tx *sql.Tx) *Store {
+	return &Store{
+		Queries: New(tx),
+		db:      s.db,
+	}
+}

@@ -3,7 +3,6 @@ package protect
 import (
 	"net"
 	"net/http"
-	"strings"
 	"sync"
 	"time"
 )
@@ -98,6 +97,7 @@ func (rl *IPRateLimiter) Inspect(key string) (count int, start time.Time, found 
 	return count, rl.currWindowStart, ok
 }
 
+/*
 func GetIP(r *http.Request) string {
 	hostPort := r.RemoteAddr
 	if hostPort == "" {
@@ -108,4 +108,26 @@ func GetIP(r *http.Request) string {
 		return strings.Trim(hostPort, "[]")
 	}
 	return host
+}
+*/
+
+func GetIP(r *http.Request) string {
+	// ✅ DEV / TEST OVERRIDE
+	if ip := r.Header.Get("X-Test-IP"); ip != "" {
+		return ip
+	}
+
+	// PROD: behind trusted proxy
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		// optionally gate this by env
+		//return parseFirstIP(xff)
+		return xff
+	}
+
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		return host
+	}
+
+	return ""
 }

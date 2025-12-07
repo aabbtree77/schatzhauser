@@ -29,3 +29,11 @@ LIMIT 1;
 -- name: DeleteSessionByToken :exec
 DELETE FROM sessions WHERE session_token = ?;
 
+-- name: CountUsersByIP :one
+SELECT COUNT(*) FROM users
+WHERE ip = ?;
+
+-- name: CreateUserWithIP :one
+INSERT INTO users (username, password_hash, ip, created_at)
+VALUES (?, ?, ?, datetime('now'))
+RETURNING id, username, password_hash, created_at;

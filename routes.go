@@ -14,8 +14,9 @@ func registerRoutes(mux *http.ServeMux, db *sql.DB,
 	cfg *config.Config) {
 
 	mux.Handle("/register", &handlers.RegisterHandler{
-		DB:         db,
-		IPRLimiter: protect.NewIPRateLimiter(tomlSect2IPRConfig(cfg.IPRateLimiter.Register)),
+		DB:                  db,
+		IPRLimiter:          protect.NewIPRateLimiter(tomlSect2IPRConfig(cfg.IPRateLimiter.Register)),
+		AccountPerIPLimiter: cfg.AccountPerIPLimiter,
 	})
 
 	mux.Handle("/login", &handlers.LoginHandler{

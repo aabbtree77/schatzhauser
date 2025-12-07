@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aabbtree77/schatzhauser/db"
@@ -147,4 +148,12 @@ func tooManyRequests(w http.ResponseWriter) {
 		"status":  "error",
 		"message": "rate limit exceeded",
 	})
+}
+
+func isUniqueConstraint(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "UNIQUE constraint failed")
 }

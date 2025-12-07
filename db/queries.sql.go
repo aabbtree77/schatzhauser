@@ -7,8 +7,21 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
+
+const countUsersByIP = `-- name: CountUsersByIP :one
+SELECT COUNT(*) FROM users
+WHERE ip = ?
+`
+
+func (q *Queries) CountUsersByIP(ctx context.Context, ip string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsersByIP, ip)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
 
 const createSession = `-- name: CreateSession :one
 INSERT INTO sessions (user_id, session_token, created_at, expires_at)
@@ -46,9 +59,47 @@ type CreateUserParams struct {
 	PasswordHash string
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+type CreateUserRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRowContext(ctx, createUser, arg.Username, arg.PasswordHash)
-	var i User
+	var i CreateUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createUserWithIP = `-- name: CreateUserWithIP :one
+INSERT INTO users (username, password_hash, ip, created_at)
+VALUES (?, ?, ?, datetime('now'))
+RETURNING id, username, password_hash, created_at
+`
+
+type CreateUserWithIPParams struct {
+	Username     string
+	PasswordHash string
+	Ip           string
+}
+
+type CreateUserWithIPRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+}
+
+func (q *Queries) CreateUserWithIP(ctx context.Context, arg CreateUserWithIPParams) (CreateUserWithIPRow, error) {
+	row := q.db.QueryRowContext(ctx, createUserWithIP, arg.Username, arg.PasswordHash, arg.Ip)
+	var i CreateUserWithIPRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
@@ -94,9 +145,16 @@ WHERE id = ?
 LIMIT 1
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+type GetUserByIDRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (GetUserByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByID, id)
-	var i User
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
@@ -113,9 +171,16 @@ WHERE username = ?
 LIMIT 1
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+type GetUserByUsernameRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
+	var i GetUserByUsernameRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,

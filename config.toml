@@ -1,5 +1,11 @@
-debug = false
+debug = true
+
 dbpath = "./data/data.db"
+
+# Max accounts per IP
+[account_per_ip_limiter]
+enable = true
+max_accounts = 7
 
 # At most 5 registration attempts per minute per IP
 [ip_rate_limiter.register]

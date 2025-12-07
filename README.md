@@ -2,19 +2,26 @@
 
 This is a minimal RESTful API server (backend) in Go:
 
-- import "net/http", no chi,
+- dev-centric and AI-friendly:
+
+  - import "net/http", SQLite, sqlc, no fragile 3rd party,
+  - "middleware" is just Go inside a request handler,
+  - no javaisms, no lambda calculus: simple config structs,
+  - self-sufficient tests as external to the server Go programs (no import "testing").
 
 - username/passwd auth with session cookies,
 
-- request rate limiter per IP,
+- maximal request rate per IP (fixed window, in memory, non-leaking memory),
 
-- "middleware" is just Go inside a request handler,
+- maximal account number per IP (persistent in SQLite),
 
 - [Mat Ryer's graceful ctrl+C](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/).
 
+More to come, read below.
+
 ## Motivation
 
-The ideal is [PocketBase](https://pocketbase.io/docs/authentication/), aiming for something even simpler here.
+The ideal is [PocketBase](https://pocketbase.io/docs/authentication/), aiming for something even simpler here: no GUIs, no emails, no multiple auth providers, more focus on reliability and dev-centric usability.
 
 The PocketBase revolution:
 
@@ -24,27 +31,27 @@ systemctl start myapp
 journalctl -u myapp -f
 ```
 
-myapp is a Go binary which updates data.db on the same VPS, plain Linux. No devops yaml "application gateway ingress controllers" from hell. If you are scaling, you are on the wrong side of history.
-
-I use almost no 3rd party, except these:
+myapp is a Go binary which updates data.db on the same VPS, plain Linux. No devops yaml "application gateway ingress controllers" from hell, no Js/Ts bundlers and Next.js. If you are scaling, you are on the wrong side of history.
 
 ```bash
+git clone https://github.com/aabbtree77/schatzhauser.git
+cd schatzhauser
 go mod init github.com/aabbtree77/schatzhauser
 go get github.com/mattn/go-sqlite3
 go get golang.org/x/crypto/bcrypt
 go get github.com/sqlc-dev/sqlc
 go get github.com/BurntSushi/toml
+sqlc generate
+mkdir -p data
+go build -o myapp .
 ```
 
-## Details
+## Tests
 
 Terminal 1:
 
 ```bash
-sqlc generate
-go build -o schatzhauser .
-mkdir -p data
-./schatzhauser
+./myapp
 time=2025-12-02T22:41:03.389+02:00 level=INFO msg="starting schatzhauser" debug=true
 time=2025-12-02T22:41:03.389+02:00 level=INFO msg="listening on :8080"
 ^Ctime=2025-12-02T22:41:40.035+02:00 level=INFO msg="shutting down"
@@ -82,21 +89,40 @@ go run ./tests/register
 go run ./tests/login
 go run ./tests/profile
 go run ./tests/logout
-go run ./tests/ip_rate_limit
+go run ./tests/req_rate_per_ip
+go run ./tests/account_rate_per_ip
 ```
 
 The IP rate limiter is a simple-looking fixed window counter, but it is already the second version as the first one leaked memory. Tricky...
 
 Ask AI to write an industrial grade IP rate limiter, but bear in mind the codes which are hard to understand will be even harder to debug, so I follow KISS here.
 
-## Coming Soon
+## More to Come
 
-- [ ] Maximal number of registered accounts per IP.
+- [x] Maximal number of registered accounts per IP.
+
+- [ ] Admin to manage users (role variable with create/delete capability).
 
 - [ ] Proof of work to make spam not viable economically.
 
 - [ ] HTTP request body size limiter.
 
-- [ ] Session expiry.
-
 - [ ] Black listing IPs.
+
+- [ ] sqlc workflow to do just about anything.
+
+- [ ] HTTPS with Caddy, tests on real VPS or locally with ngrok.
+
+- [ ] Harmonization, versioning, docs, use, promotion.
+
+- [ ] The ultimate goal is to build useful reliable services, bring back the joy of programming.
+
+## References
+
+[How We Went All In on sqlc/pgx for Postgres + Go](https://brandur.org/sqlc)
+
+[How We Went All In on sqlc... on HN](https://news.ycombinator.com/item?id=28462162)
+
+[Pocketbase – open-source realtime back end in 1 file on HN](https://news.ycombinator.com/item?id=46075320)
+
+[PocketBase: FLOSS/fund sponsorship and UI rewrite #7287](https://github.com/pocketbase/pocketbase/discussions/7287)

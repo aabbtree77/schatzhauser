@@ -17,10 +17,16 @@ type IPRateLimiterConfig struct {
 	Profile  IPRateLimiterSection `toml:"profile"`
 }
 
+type AccountPerIPLimiterConfig struct {
+	Enable      bool `toml:"enable"`
+	MaxAccounts int  `toml:"max_accounts"`
+}
+
 type Config struct {
-	IPRateLimiter IPRateLimiterConfig `toml:"ip_rate_limiter"`
-	DBPath        string              `toml:"dbpath"`
-	Debug         bool                `toml:"debug"`
+	AccountPerIPLimiter AccountPerIPLimiterConfig `toml:"account_per_ip_limiter"`
+	IPRateLimiter       IPRateLimiterConfig       `toml:"ip_rate_limiter"`
+	DBPath              string                    `toml:"dbpath"`
+	Debug               bool                      `toml:"debug"`
 }
 
 func LoadConfig(path string) (*Config, error) {
