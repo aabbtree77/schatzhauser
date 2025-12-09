@@ -8,14 +8,14 @@ import (
 	"os"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/config"
-	"github.com/aabbtree77/schatzhauser/logger"
+	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/logger"
 )
 
 // -------- CONFIG --------
 
 const (
-	registerURL = "http://localhost:8080/register"
+	registerURL = "http://localhost:8080/api/register"
 )
 
 func freshIP() string {

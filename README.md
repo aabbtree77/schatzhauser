@@ -1,128 +1,101 @@
 ## schatzhauser
 
-This is a minimal RESTful API server (backend) in Go:
+This is a RESTful API server (backend) in Go. The ideal is [PocketBase](https://pocketbase.io/docs/authentication/), aiming for something smaller here: no GUI/TUIs (they do not scale), no emails, no multiple auth providers, focus on reliability and dev-centric usability.
 
-- dev-centric and AI-friendly:
+- [x] username/passwd auth with session cookies,
 
-  - import "net/http", SQLite, sqlc, no fragile 3rd party,
-  - "middleware" is just Go inside a request handler,
-  - no javaisms, no lambda calculus: simple config structs,
-  - self-sufficient tests as external to the server Go programs (no import "testing").
+- [x] maximal request rate per IP (fixed window, in memory),
 
-- username/passwd auth with session cookies,
+- [x] maximal account number per IP (persistent in SQLite),
 
-- maximal request rate per IP (fixed window, in memory, non-leaking memory),
+- [x] god mode to create, update, list, delete users and change roles,
 
-- maximal account number per IP (persistent in SQLite),
+- [x] tests as examples (independent Go programs, no import "testing", no faking).
 
-- [Mat Ryer's graceful ctrl+C](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/).
+The code uses only Go stdlib for routing, SQLite, sqlc v2 with no SQL in the Go code. Middleware is just Go inside a request handler.
 
-More to come, read below.
+WIP...
 
-## Motivation
+## Setup
 
-The ideal is [PocketBase](https://pocketbase.io/docs/authentication/), aiming for something even simpler here: no GUIs, no emails, no multiple auth providers, more focus on reliability and dev-centric usability.
+Clone, cd, and run `make all` which should create two binaries inside ./bin: server and god.
 
-The PocketBase revolution:
-
-```
-systemctl enable myapp
-systemctl start myapp
-journalctl -u myapp -f
-```
-
-myapp is a Go binary which updates data.db on the same VPS, plain Linux. No devops yaml "application gateway ingress controllers" from hell, no Js/Ts bundlers and Next.js. If you are scaling, you are on the wrong side of history.
+Rebuilding when modifying code:
 
 ```bash
-git clone https://github.com/aabbtree77/schatzhauser.git
-cd schatzhauser
-go mod init github.com/aabbtree77/schatzhauser
-go get github.com/mattn/go-sqlite3
-go get golang.org/x/crypto/bcrypt
-go get github.com/sqlc-dev/sqlc
-go get github.com/BurntSushi/toml
-sqlc generate
-mkdir -p data
-go build -o myapp .
-```
-
-## Tests
-
-Terminal 1:
-
-```bash
-./myapp
-time=2025-12-02T22:41:03.389+02:00 level=INFO msg="starting schatzhauser" debug=true
+make clean
+make
+./bin/server
+time=2025-12-02T22:41:03.389+02:00 level=INFO msg="starting server" debug=true
 time=2025-12-02T22:41:03.389+02:00 level=INFO msg="listening on :8080"
 ^Ctime=2025-12-02T22:41:40.035+02:00 level=INFO msg="shutting down"
 ```
 
-Terminal 2:
+Adjust config.toml to your wishes, but the tests will demand their right values.
+
+## API
 
 ```bash
-# register
-curl -i -X POST -H 'Content-Type: application/json' -d '{"username":"u1","password":"p1"}' http://localhost:8080/register
+## API Usage
 
-# login (save cookie)
-curl -i -c cookiejar.txt -X POST -H 'Content-Type: application/json' -d '{"username":"u1","password":"p1"}' http://localhost:8080/login
+### Register
+curl -i -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username":"u1","password":"p1"}' \
+  http://localhost:8080/api/register
 
-# profile (send cookie)
-curl -i -b cookiejar.txt http://localhost:8080/profile
+### Login (save cookie)
+curl -i -c cookiejar.txt \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username":"u1","password":"p1"}' \
+  http://localhost:8080/api/login
 
-# logout
-curl -i -b cookiejar.txt -X POST http://localhost:8080/logout
+### Profile (authenticated)
+curl -i -b cookiejar.txt \
+  http://localhost:8080/api/profile
+
+### Logout
+curl -i -b cookiejar.txt \
+  -X POST \
+  http://localhost:8080/api/logout
+
 ```
 
-Further tests:
+## God Mode
+
+Use god to create admin, adjust roles, cleanup users. It is a minimal CLI app which opens the same SQLite database (DB) file directly. It uses the same schema and sqlc queries.
+
+SQLite supports multiple processes safely (file locking handles it), with one caveat. If the server is actively writing at the same moment, SQLite may briefly lock the DB. In that case god will just get a transient error; rerun is fine. So one can run god while the server is up or down.
 
 ```bash
-go run ./tests/profile
-Cookies after login: [schatz_sess=267e63d4c1d67ab173ba385cb53929a1db5a80e542f0cae1065209c622c2891e]
-PASS: profile with cookie: status=200, body={"status":"ok","user":{"created":{"Time":"2025-12-02T21:31:43Z","Valid":true},"id":19,"username":"profile_test_1764711103328518799"}}
-
-PASS: profile without cookie: got 401 as expected
-=== SUMMARY: 1/1 passed ===
+./bin/god create --username admin --password hunter2 --role admin
+./bin/god create --username alice --password s3cret --ip 203.0.113.7
+./bin/god promote --username alice
+./bin/god demote --username alice
+./bin/god delete --username alice
+./bin/god list
 ```
 
+Coming soon:
+
+```bash
+./bin/god user get alice
+./bin/god user set --username alice --role admin
+./bin/god user rotate-password alice
+
+./bin/god users delete --prefix test_
+./bin/god users delete --created-between 2024-01-01 2024-02-01
 ```
-go run ./tests/register
-go run ./tests/login
-go run ./tests/profile
-go run ./tests/logout
-go run ./tests/req_rate_per_ip
-go run ./tests/account_rate_per_ip
-```
-
-The IP rate limiter is a simple-looking fixed window counter, but it is already the second version as the first one leaked memory. Tricky...
-
-Ask AI to write an industrial grade IP rate limiter, but bear in mind the codes which are hard to understand will be even harder to debug, so I follow KISS here.
-
-## More to Come
-
-- [x] Maximal number of registered accounts per IP.
-
-- [ ] Admin to manage users (role variable with create/delete capability).
-
-- [ ] Proof of work to make spam not viable economically.
-
-- [ ] HTTP request body size limiter.
-
-- [ ] Black listing IPs.
-
-- [ ] sqlc workflow to do just about anything.
-
-- [ ] HTTPS with Caddy, tests on real VPS or locally with ngrok.
-
-- [ ] Harmonization, versioning, docs, use, promotion.
-
-- [ ] The ultimate goal is to build useful reliable services, bring back the joy of programming.
 
 ## References
 
-[How We Went All In on sqlc/pgx for Postgres + Go](https://brandur.org/sqlc)
+[How We Went All In on sqlc/pgx for Postgres + Go (2021)](https://brandur.org/sqlc)
 
 [How We Went All In on sqlc... on HN](https://news.ycombinator.com/item?id=28462162)
 
 [Pocketbase – open-source realtime back end in 1 file on HN](https://news.ycombinator.com/item?id=46075320)
 
 [PocketBase: FLOSS/fund sponsorship and UI rewrite #7287](https://github.com/pocketbase/pocketbase/discussions/7287)
+
+[Mat Ryer: How I write HTTP services in Go after 13 years (2024)](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)

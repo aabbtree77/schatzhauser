@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/config"
-	"github.com/aabbtree77/schatzhauser/logger"
+	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/logger"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -52,6 +52,8 @@ func main() {
 	if err != nil {
 		logger.Error("failed to load config", "err", err)
 	}
+
+	fmt.Printf("register Enable=%v\n", cfg.IPRateLimiter.Register.Enable)
 
 	if cfg.IPRateLimiter.Register.Enable {
 		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.register]")
@@ -137,7 +139,7 @@ func main() {
 
 	// helper to perform request
 	doRequest := func(body []byte) (int, []byte, error) {
-		req, err := http.NewRequest("POST", baseURL+"/register", bytes.NewReader(body))
+		req, err := http.NewRequest("POST", baseURL+"/api/register", bytes.NewReader(body))
 		if err != nil {
 			return 0, nil, err
 		}

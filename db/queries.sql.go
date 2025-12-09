@@ -109,12 +109,60 @@ func (q *Queries) CreateUserWithIP(ctx context.Context, arg CreateUserWithIPPara
 	return i, err
 }
 
+const createUserWithRole = `-- name: CreateUserWithRole :one
+INSERT INTO users (username, password_hash, ip, role, created_at)
+VALUES (?, ?, ?, ?, datetime('now'))
+RETURNING id, username, password_hash, created_at, role
+`
+
+type CreateUserWithRoleParams struct {
+	Username     string
+	PasswordHash string
+	Ip           string
+	Role         string
+}
+
+type CreateUserWithRoleRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+	Role         string
+}
+
+func (q *Queries) CreateUserWithRole(ctx context.Context, arg CreateUserWithRoleParams) (CreateUserWithRoleRow, error) {
+	row := q.db.QueryRowContext(ctx, createUserWithRole,
+		arg.Username,
+		arg.PasswordHash,
+		arg.Ip,
+		arg.Role,
+	)
+	var i CreateUserWithRoleRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.Role,
+	)
+	return i, err
+}
+
 const deleteSessionByToken = `-- name: DeleteSessionByToken :exec
 DELETE FROM sessions WHERE session_token = ?
 `
 
 func (q *Queries) DeleteSessionByToken(ctx context.Context, sessionToken string) error {
 	_, err := q.db.ExecContext(ctx, deleteSessionByToken, sessionToken)
+	return err
+}
+
+const deleteUserByUsername = `-- name: DeleteUserByUsername :exec
+DELETE FROM users WHERE username = ?
+`
+
+func (q *Queries) DeleteUserByUsername(ctx context.Context, username string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserByUsername, username)
 	return err
 }
 
@@ -186,6 +234,110 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 		&i.Username,
 		&i.PasswordHash,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getUserByUsernameWithRole = `-- name: GetUserByUsernameWithRole :one
+SELECT id, username, password_hash, created_at, role
+FROM users
+WHERE username = ?
+LIMIT 1
+`
+
+type GetUserByUsernameWithRoleRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+	Role         string
+}
+
+func (q *Queries) GetUserByUsernameWithRole(ctx context.Context, username string) (GetUserByUsernameWithRoleRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsernameWithRole, username)
+	var i GetUserByUsernameWithRoleRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.Role,
+	)
+	return i, err
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, username, password_hash, created_at, role
+FROM users
+ORDER BY created_at DESC
+`
+
+type ListUsersRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+	Role         string
+}
+
+func (q *Queries) ListUsers(ctx context.Context) ([]ListUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListUsersRow
+	for rows.Next() {
+		var i ListUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Username,
+			&i.PasswordHash,
+			&i.CreatedAt,
+			&i.Role,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUserRole = `-- name: UpdateUserRole :one
+UPDATE users
+SET role = ?
+WHERE username = ?
+RETURNING id, username, password_hash, created_at, role
+`
+
+type UpdateUserRoleParams struct {
+	Role     string
+	Username string
+}
+
+type UpdateUserRoleRow struct {
+	ID           int64
+	Username     string
+	PasswordHash string
+	CreatedAt    sql.NullTime
+	Role         string
+}
+
+func (q *Queries) UpdateUserRole(ctx context.Context, arg UpdateUserRoleParams) (UpdateUserRoleRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUserRole, arg.Role, arg.Username)
+	var i UpdateUserRoleRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.Role,
 	)
 	return i, err
 }

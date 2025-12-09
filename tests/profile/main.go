@@ -11,8 +11,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/config"
-	"github.com/aabbtree77/schatzhauser/logger"
+	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/logger"
 )
 
 func must(err error) {
@@ -29,7 +29,7 @@ func registerAndLogin() (*http.Client, string) {
 	// register
 	payload := map[string]string{"username": username, "password": password}
 	data, _ := json.Marshal(payload)
-	resp, err := http.Post("http://localhost:8080/register", "application/json", bytes.NewReader(data))
+	resp, err := http.Post("http://localhost:8080/api/register", "application/json", bytes.NewReader(data))
 	must(err)
 	resp.Body.Close()
 	if resp.StatusCode != 201 && resp.StatusCode != 409 {
@@ -40,7 +40,7 @@ func registerAndLogin() (*http.Client, string) {
 	// login
 	jar, _ := cookiejar.New(nil)
 	client := &http.Client{Jar: jar}
-	resp, err = client.Post("http://localhost:8080/login", "application/json", bytes.NewReader(data))
+	resp, err = client.Post("http://localhost:8080/api/login", "application/json", bytes.NewReader(data))
 	must(err)
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
@@ -65,7 +65,7 @@ func runTestProfile() bool {
 	client, username := registerAndLogin()
 
 	// access protected /profile
-	resp, err := client.Get("http://localhost:8080/profile")
+	resp, err := client.Get("http://localhost:8080/api/profile")
 	must(err)
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
@@ -77,7 +77,7 @@ func runTestProfile() bool {
 	fmt.Printf("PASS: profile with cookie: status=%d, body=%s\n", resp.StatusCode, bodyStr)
 
 	// access without cookie
-	resp2, err := http.Get("http://localhost:8080/profile")
+	resp2, err := http.Get("http://localhost:8080/api/profile")
 	must(err)
 	defer resp2.Body.Close()
 	body2, _ := io.ReadAll(resp2.Body)

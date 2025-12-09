@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/config"
-	"github.com/aabbtree77/schatzhauser/logger"
+	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/logger"
 )
 
 type TestCase struct {
@@ -33,7 +33,7 @@ func runTest(tc TestCase) bool {
 		data, _ = json.Marshal(tc.Payload)
 	}
 
-	resp, err := http.Post("http://localhost:8080/login", "application/json", bytes.NewReader(data))
+	resp, err := http.Post("http://localhost:8080/api/login", "application/json", bytes.NewReader(data))
 	if err != nil {
 		fmt.Printf("ERROR %s: %v\n", tc.Name, err)
 		return false
@@ -60,7 +60,7 @@ func registerTempUser(username, password string) error {
 	}
 	data, _ := json.Marshal(payload)
 
-	resp, err := http.Post("http://localhost:8080/register", "application/json", bytes.NewReader(data))
+	resp, err := http.Post("http://localhost:8080/api/register", "application/json", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}

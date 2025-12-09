@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/config"
-	"github.com/aabbtree77/schatzhauser/logger"
+	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/logger"
 )
 
 const (
@@ -27,7 +27,7 @@ func must(err error) {
 func registerUser(username, password string) {
 	payload := map[string]string{"username": username, "password": password}
 	data, _ := json.Marshal(payload)
-	resp, err := http.Post(baseURL+"/register", "application/json", bytes.NewReader(data))
+	resp, err := http.Post(baseURL+"/api/register", "application/json", bytes.NewReader(data))
 	must(err)
 	defer resp.Body.Close()
 	if resp.StatusCode != 201 && resp.StatusCode != 409 {
@@ -40,7 +40,7 @@ func registerUser(username, password string) {
 func doLogin(username, password string) (int, string, error) {
 	payload := map[string]string{"username": username, "password": password}
 	data, _ := json.Marshal(payload)
-	resp, err := http.Post(baseURL+"/login", "application/json", bytes.NewReader(data))
+	resp, err := http.Post(baseURL+"/api/login", "application/json", bytes.NewReader(data))
 	if err != nil {
 		return 0, "", err
 	}

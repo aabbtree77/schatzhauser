@@ -37,3 +37,29 @@ WHERE ip = ?;
 INSERT INTO users (username, password_hash, ip, created_at)
 VALUES (?, ?, ?, datetime('now'))
 RETURNING id, username, password_hash, created_at;
+
+-- name: CreateUserWithRole :one
+INSERT INTO users (username, password_hash, ip, role, created_at)
+VALUES (?, ?, ?, ?, datetime('now'))
+RETURNING id, username, password_hash, created_at, role;
+
+-- name: DeleteUserByUsername :exec
+DELETE FROM users WHERE username = ?;
+
+-- name: UpdateUserRole :one
+UPDATE users
+SET role = ?
+WHERE username = ?
+RETURNING id, username, password_hash, created_at, role;
+
+-- name: ListUsers :many
+SELECT id, username, password_hash, created_at, role
+FROM users
+ORDER BY created_at DESC;
+
+-- name: GetUserByUsernameWithRole :one
+SELECT id, username, password_hash, created_at, role
+FROM users
+WHERE username = ?
+LIMIT 1;
+
