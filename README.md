@@ -1,6 +1,8 @@
 ## schatzhauser
 
-This is a minimal Go backend to build protected CRUD apps. No admin GUI/TUIs (they do not scale), no emails, no 3rd party auth providers. KISS, DIY, YAGNI. The focus is on fighting bots.
+This is a Go backend to build protected CRUD apps. No admin GUI/TUIs (they do not scale), no emails, no 3rd party auth providers. KISS, DIY, YAGNI.
+
+The following works already (some polishing will continue):
 
 - [x] register, login/out, profile handlers (routes),
 
@@ -12,7 +14,7 @@ This is a minimal Go backend to build protected CRUD apps. No admin GUI/TUIs (th
 
 - [x] maximal request body size (register, login),
 
-- [ ] PoW,
+- [x] proof of work,
 
 - [x] god mode to create, update, list, delete users and change roles,
 
