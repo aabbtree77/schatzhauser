@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/BurntSushi/toml"
 )
 
@@ -32,9 +34,17 @@ type AccountPerIPLimiterConfig struct {
 	MaxAccounts int  `toml:"max_accounts"`
 }
 
+type ProofOfWorkConfig struct {
+	Enable     bool          `toml:"enable"`
+	Difficulty uint8         `toml:"difficulty"`
+	TTLSeconds time.Duration `toml:"ttl_seconds"`
+	SecretKey  string        `toml:"secret_key"`
+}
+
 type Config struct {
 	RBodySizeLimiter    RBodySizeLimiterConfig    `toml:"rbody_size_limiter"`
 	AccountPerIPLimiter AccountPerIPLimiterConfig `toml:"account_per_ip_limiter"`
+	ProofOfWork         ProofOfWorkConfig         `toml:"proof_of_work"`
 	IPRateLimiter       IPRateLimiterConfig       `toml:"ip_rate_limiter"`
 	DBPath              string                    `toml:"dbpath"`
 	Debug               bool                      `toml:"debug"`

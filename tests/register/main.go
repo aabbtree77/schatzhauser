@@ -53,8 +53,6 @@ func main() {
 		logger.Error("failed to load config", "err", err)
 	}
 
-	fmt.Printf("register Enable=%v\n", cfg.IPRateLimiter.Register.Enable)
-
 	if cfg.IPRateLimiter.Register.Enable {
 		fmt.Println("Make sure enable is false inside config.toml [ip_rate_limiter.register]")
 		os.Exit(1)
