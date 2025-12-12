@@ -3,10 +3,10 @@ debug = true
 dbpath = "./data/data.db"
 
 [proof_of_work]
-enable = true
+enable = false
 difficulty = 22
 ttl_seconds = 90
-#secret_key = "NjTRFeOWWc2x/5qUHmRWN7MzN2+58Dp+hVElh89Tr58="
+secret_key = "NjTRFeOWWc2x/5qUHmRWN7MzN2+58Dp+hVElh89Tr58="
 #secret_key = ""
 
 # Max http request body size for user registration

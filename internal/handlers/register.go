@@ -133,19 +133,18 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	txStore := store.WithTx(tx)
 
-	// 1️⃣ IP limit enforcement (optional, persistent)
-	if h.AccountPerIPLimiter.Enable {
-		if h.AccountPerIPLimiter.MaxAccounts > 0 && ip != "" {
-			count, err := txStore.CountUsersByIP(r.Context(), ip)
-			if err != nil {
-				internalError(w, "cannot check ip usage")
-				return
-			}
-			if count >= int64(h.AccountPerIPLimiter.MaxAccounts) {
-				tooManyRequests(w)
-				return
-			}
-		}
+	// 1️⃣ Max accounts per IP limit enforcement (optional, persistent)
+	// Build a per-request limiter so the count runs inside the current tx
+	limiter := protect.NewAccountPerIPLimiter(h.AccountPerIPLimiter, txStore.CountUsersByIP)
+
+	ok, err := limiter.Allow(r.Context(), ip)
+	if err != nil {
+		internalError(w, "cannot check ip usage")
+		return
+	}
+	if !ok {
+		tooManyRequests(w)
+		return
 	}
 
 	// 2️⃣ Hash password

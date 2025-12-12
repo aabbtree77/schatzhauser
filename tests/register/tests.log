@@ -1,5 +1,5 @@
 === TEST: valid registration
-PASS: got status 201 -- body={"id":153,"username":"test_register_valid"}
+PASS: got status 201 -- body={"id":259,"username":"test_register_valid"}
 
 DB: username test_register_valid exists
 === TEST: missing username
@@ -12,7 +12,7 @@ PASS: got status 400 -- body={"message":"username and password required","status
 PASS: got status 400 -- body={"message":"invalid json","status":"error"}
 
 === TEST: duplicate username
-first registration status=201 body={"id":154,"username":"test_register_dup"}
+first registration status=201 body={"id":260,"username":"test_register_dup"}
 
 PASS: got status 409 (body={"message":"username already taken","status":"error"}
 ) 

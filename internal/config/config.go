@@ -11,15 +11,37 @@ type RBodySizeLimiterSection struct {
 	MaxRBodyBytes int64 `toml:"max_rbody_bytes"`
 }
 
+func DefaultRBodySizeLimiterSection() RBodySizeLimiterSection {
+	return RBodySizeLimiterSection{
+		Enable:        false,
+		MaxRBodyBytes: 4096,
+	}
+}
+
 type RBodySizeLimiterConfig struct {
 	Register RBodySizeLimiterSection `toml:"register"`
 	Login    RBodySizeLimiterSection `toml:"login"`
+}
+
+func DefaultRBodySizeLimiterConfig() RBodySizeLimiterConfig {
+	return RBodySizeLimiterConfig{
+		Register: DefaultRBodySizeLimiterSection(),
+		Login:    DefaultRBodySizeLimiterSection(),
+	}
 }
 
 type IPRateLimiterSection struct {
 	Enable      bool `toml:"enable"`
 	MaxRequests int  `toml:"max_requests"`
 	WindowMS    int  `toml:"window_ms"`
+}
+
+func DefaultIPRateLimiterSection() IPRateLimiterSection {
+	return IPRateLimiterSection{
+		Enable:      false,
+		MaxRequests: 10,
+		WindowMS:    1000,
+	}
 }
 
 type IPRateLimiterConfig struct {
@@ -29,9 +51,25 @@ type IPRateLimiterConfig struct {
 	Profile  IPRateLimiterSection `toml:"profile"`
 }
 
+func DefaultIPRateLimiterConfig() IPRateLimiterConfig {
+	return IPRateLimiterConfig{
+		Register: DefaultIPRateLimiterSection(),
+		Login:    DefaultIPRateLimiterSection(),
+		Logout:   DefaultIPRateLimiterSection(),
+		Profile:  DefaultIPRateLimiterSection(),
+	}
+}
+
 type AccountPerIPLimiterConfig struct {
 	Enable      bool `toml:"enable"`
 	MaxAccounts int  `toml:"max_accounts"`
+}
+
+func DefaultAccountPerIPLimiterConfig() AccountPerIPLimiterConfig {
+	return AccountPerIPLimiterConfig{
+		Enable:      false,
+		MaxAccounts: 7,
+	}
 }
 
 type ProofOfWorkConfig struct {
@@ -39,6 +77,15 @@ type ProofOfWorkConfig struct {
 	Difficulty uint8         `toml:"difficulty"`
 	TTLSeconds time.Duration `toml:"ttl_seconds"`
 	SecretKey  string        `toml:"secret_key"`
+}
+
+func DefaultProofOfWorkConfig() ProofOfWorkConfig {
+	return ProofOfWorkConfig{
+		Enable:     false,
+		Difficulty: 20,
+		TTLSeconds: 30,
+		SecretKey:  "",
+	}
 }
 
 type Config struct {
@@ -50,11 +97,19 @@ type Config struct {
 	Debug               bool                      `toml:"debug"`
 }
 
-func LoadConfig(path string) (*Config, error) {
-	var cfg Config
-	_, err := toml.DecodeFile(path, &cfg)
-	if err != nil {
-		return nil, err
+func LoadConfig(path string) (Config, error) {
+	cfg := Config{
+		RBodySizeLimiter:    DefaultRBodySizeLimiterConfig(),
+		IPRateLimiter:       DefaultIPRateLimiterConfig(),
+		AccountPerIPLimiter: DefaultAccountPerIPLimiterConfig(),
+		ProofOfWork:         DefaultProofOfWorkConfig(),
+		// DBPath and Debug intentionally left to TOML/zero-value
+		// Empty DBPath should fail loudly, not store things somewhere wrongly
 	}
-	return &cfg, nil
+
+	if _, err := toml.DecodeFile(path, &cfg); err != nil {
+		return Config{}, err
+	}
+
+	return cfg, nil
 }
