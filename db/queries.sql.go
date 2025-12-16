@@ -14,6 +14,7 @@ import (
 const countUsersByIP = `-- name: CountUsersByIP :one
 SELECT COUNT(*) FROM users
 WHERE ip = ?
+AND created_at >= datetime('now', '-30 days')
 `
 
 func (q *Queries) CountUsersByIP(ctx context.Context, ip string) (int64, error) {
@@ -316,6 +317,15 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const touchUsersTable = `-- name: TouchUsersTable :exec
+UPDATE users SET ip = ip WHERE ip = ?
+`
+
+func (q *Queries) TouchUsersTable(ctx context.Context, ip string) error {
+	_, err := q.db.ExecContext(ctx, touchUsersTable, ip)
+	return err
 }
 
 const updateUserPatch = `-- name: UpdateUserPatch :one

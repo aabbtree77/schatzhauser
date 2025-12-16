@@ -79,11 +79,18 @@ func (h *RegisterHandler) register(
 
 	txStore := store.WithTx(tx)
 
+	// force SQLite write lock early
+	if err := txStore.TouchUsersTable(r.Context(), ip); err != nil {
+		httpx.InternalError(w, "cannot lock users table")
+		return
+	}
+
 	limiter := protect.NewAccountPerIPLimiter(
 		h.AccountPerIPLimiter,
 		txStore.CountUsersByIP,
 	)
 
+	// now this is race-safe
 	ok, err := limiter.Allow(r.Context(), ip)
 	if err != nil {
 		httpx.InternalError(w, "cannot check ip usage")

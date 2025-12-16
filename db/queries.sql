@@ -31,7 +31,12 @@ DELETE FROM sessions WHERE session_token = ?;
 
 -- name: CountUsersByIP :one
 SELECT COUNT(*) FROM users
-WHERE ip = ?;
+WHERE ip = ?
+AND created_at >= datetime('now', '-30 days');
+
+-- name: TouchUsersTable :exec
+UPDATE users SET ip = ip WHERE ip = ?;
+
 
 -- name: CreateUserWithIP :one
 INSERT INTO users (username, password_hash, ip, created_at)

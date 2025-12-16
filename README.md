@@ -1,32 +1,30 @@
 ## schatzhauser
 
-This is a Go backend (BaaS) to build protected web apps. "S" for self-hosting on a VPS.
-
-KISS, DIY, YAGNI, [DOTADIW](https://dotadiw.com/). Slow down and enjoy Go.
+This is a Go backend (BaaS) to add users and storage to frontend via REST API. KISS, DIY, YAGNI, [DOTADIW](https://dotadiw.com/). Slow down and enjoy Go.
 
 The following works already (some polishing will continue):
 
-- [x] register, login/out, profile handlers (routes),
+- [x] register, login/out, profile (a protected route),
 
 - [x] username/passwd auth with session cookies,
 
 - [x] cli to manage users, no guis/tuis,
 
-- [x] optional route hardening to fight bots:
+- [x] tests are Go programs (real examples, no import "testing").
 
-  - [x] maximal request rate per IP (fixed window, in memory),
+Absolutely no paid 3rd party black boxes like auth or emails. VPS deployment with Caddy, just ask AI.
 
-  - [x] maximal account number per IP (persistent in SQLite),
+Use the included guards ("middleware") to fight bots:
 
-  - [x] maximal request body size (register, login),
+- [x] maximal request rate per IP (fixed window, in memory),
 
-  - [x] proof of work if you want it extremely bot-unfriendly,
+- [x] maximal account number per IP (persistent in SQLite),
 
-- [x] tests are Go programs as real examples, no import "testing",
+- [x] maximal request body size (register, login),
 
-- [ ] VPS deployment.
+- [x] proof of work if you want it extremely bot-unfriendly,
 
-Go stdlib for routing, SQLite, sqlc v2 with no SQL in the Go code. See [Architecture](docs/architecture.md) for more details and code organization.
+Go stdlib for routing, SQLite, sqlc v2 with no SQL in the Go code. See [Architecture](docs/architecture.md) for more details and code organization. Around 3KLOC of Go atm (Dec 16, 2025).
 
 ## Setup/Workflow
 
@@ -162,22 +160,18 @@ go run ./tests/req_body_size
 go run ./tests/pow_register
 ```
 
-TD: clean up and automate this into a single command by isolating server instances loading different ./config.toml parameters?
+TD: clean up and automate this into a single command by isolating multiple server instances loading different ./config.toml parameters?
 
-## Some Comments on Relevant Works
+## Notes
 
-[How We Went All In on sqlc/pgx for Postgres + Go (2021) on HN](https://news.ycombinator.com/item?id=28462162)
+[Kyle Conroy Gray: Introducing sqlc - Compile SQL queries to type-safe Go (2019)](https://conroy.org/introducing-sqlc)
 
-sqlc is also the way used here. Give AI migration files \*.sql, store.go, queries.sql, and it will teach you to fly. "Make me GDPR, HIPAA, or PCI-DSS compliant".
-
-[PocketBase: FLOSS/fund sponsorship and UI rewrite #7287](https://github.com/pocketbase/pocketbase/discussions/7287)
-
-PocketBase is a truly inspiring project, but it does a bit too much to be like the big boys rather than [DOTADIW](https://dotadiw.com/).
+sqlc is the way to deal with SQL in Go. No extra DSLs of ORMs, no SQL strings scattered in Go. Write SQL in SQL/AI, generate a succinct precise Go function per query with sqlc, and use that in Go. No magic objects, only plain functions.
 
 [Mat Ryer: How I write HTTP services in Go after 13 years (2024) on HN](https://grafana.com/blog/2024/02/09/how-i-write-http-services-in-go-after-13-years/)
 
-I do not believe in any design (clean code) patterns out there, but there are two concepts to note: (i) graceful shutdown with signal.NotifyContext, and (ii) reducing application startup time with sync.Once. The first one is in ./cmd/server/main.go.
+Two useful things to take away: (i) graceful shutdown with signal.NotifyContext, and (ii) reducing application startup time with sync.Once. The first one is in ./cmd/server/main.go.
 
 [Rob Pike: Self-referential functions and the design of options (2014)](https://commandcenter.blogspot.com/2014/01/self-referential-functions-and-design.html)
 
-Do "builder design pattern" instead if you must, at least it is standard. Better forget any of this and write plain Go, see ./internal/config/config.go.
+Do "builder design pattern" instead if you must, at least it is some sort of a "standard". I prefer plain Go, see ./internal/config/config.go.

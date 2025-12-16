@@ -1,5 +1,7 @@
 ## Architecture
 
+TD: remove academisms/fluff.
+
 - ./cmd - entrance points to `server` and `god` (independent user management cli).
 
 - ./data/data.db - SQlite db, single file, should be easier to vps and backup.
