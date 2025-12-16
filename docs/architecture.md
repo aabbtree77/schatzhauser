@@ -20,13 +20,11 @@ TD: remove academisms/fluff.
 
   - httpx - x for extras, json/http helpers used by both: handlers and guards.
 
-  - protect - middleware: (i) guards which are easily called by any handler in any sequence, and (ii) domain-level guards such as max account per ip limiter which is not so easy to abstract and chain due to db and context.
+  - protect - middleware: (i) guards which are easily called by any handler in any sequence, and (ii) domain-level guards such as max account per ip limiter which is not so easy to abstract and chain due to db transactions.
 
   - server/routes.go - this is where all the parameters come from main.go and config/config.go and middleware is assembled, and then passed to each handler.
 
   - config.toml - all the parameters whose default values are in config/config.go via config structs duplicating the main ones (simple Go, no builders, no Rob Pike's option structs).
-
-The trickiest part is middleware. The initial versions of this code were very direct Go (no interfaces), but the handlers began to get ugly and it was hard to reuse anything. It was also very easy to get lost with paranoid existential checks for nil and validations everywhere.
 
 These rules eliminate 80 percent of the mess:
 
@@ -42,11 +40,7 @@ These rules eliminate 80 percent of the mess:
 
 ## More about Middleware (Guards)
 
-This is the code which runs inside a handler before business logic, but sometimes also gets entangled with it.
-
-Those that run before are in-memory guards. Those which are messier may access db and are excluded into "DIY and put inside a handler".
-
-Most of the guards are **stateless, synchronous, and in-memory request gates**. To chain/execute them in sequence we need to put them under a common type which is done by forcing them to implement `protect.Guard`:
+This is the code which runs inside a handler before business logic. It is **stateless, synchronous, and in-memory**. To chain/execute them in sequence we put them under a common type `protect.Guard`:
 
 ```go
 type Guard interface {
@@ -74,9 +68,9 @@ You will find the following tested guards inside ./internal/protect:
 
 - body_size_guard.go – request body size cap.
 
-- pow_guard.go – optional Proof-of-Work challenge.
+- pow_guard.go – optional [Proof-of-Work](docs/proof_of_work.md) challenge.
 
-./internal/handlers/register.go also includes a maximal accounts per ip limiter,
+./internal/handlers/register.go also includes the Maximal Accounts per IP limiter,
 
 ```go
 limiter := protect.NewAccountPerIPLimiter(
@@ -85,6 +79,6 @@ limiter := protect.NewAccountPerIPLimiter(
 	)
 ```
 
-It needs to access db via txStore, which in turn requires further context. This is the guard of the second type mentioned above. It is excluded from middleware in order to avoid unnecessary abstractions. We are going to use the check for the accounts limit per ip only inside the register route (handle) anyway.
+It needs to access db via txStore, which runs a transaction controlled by the api/register handler. Treat those stateful guards as a handler's business logic, more details in [Accounts per IP](docs/accounts_per_ip.md) and ./internal/handlers/register.go.
 
-This way we cover (more or less) complex Ruby Rack machinery with basic typed Go code. And we will be ready for debugging when the shit hits the fan. Bear in mind that not everything that can be composed needs to be composed. Abstractions/magic bring hidden cost. YAGNI.
+This way we cover (more or less) complex Ruby Rack machinery with basic typed Go code.

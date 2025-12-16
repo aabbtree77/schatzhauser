@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"net/http"
@@ -15,10 +16,10 @@ import (
 type RegisterHandler struct {
 	DB *sql.DB
 
-	// Injected guard chain
+	// Injected request-level guards (PoW, body size, etc.)
 	Guards []protect.Guard
 
-	// Domain-level limiter config
+	// Domain config
 	AccountPerIPLimiter config.AccountPerIPLimiterConfig
 }
 
@@ -27,24 +28,26 @@ type RegisterInput struct {
 	Password string `json:"password"`
 }
 
+/*
+────────────────────────────────────────────────────────────
+HTTP entrypoint
+────────────────────────────────────────────────────────────
+*/
+
 func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// ────────────────────────────────────────
-	// Guards
-	// ────────────────────────────────────────
+	// Guards (request-level, stateless)
 	for _, g := range h.Guards {
 		if !g.Check(w, r) {
 			return
 		}
 	}
 
-	// ────────────────────────────────────────
-	// Input
-	// ────────────────────────────────────────
+	// Decode input
 	var in RegisterInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		httpx.BadRequest(w, "invalid json")
@@ -60,12 +63,17 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.register(w, r, in)
 }
 
+/*
+────────────────────────────────────────────────────────────
+Domain logic
+────────────────────────────────────────────────────────────
+*/
+
 func (h *RegisterHandler) register(
 	w http.ResponseWriter,
 	r *http.Request,
 	in RegisterInput,
 ) {
-	//ip := protect.GetIP(r)
 	ip := strings.TrimSpace(protect.GetIP(r))
 
 	store := db.NewStore(h.DB)
@@ -79,19 +87,19 @@ func (h *RegisterHandler) register(
 
 	txStore := store.WithTx(tx)
 
-	// force SQLite write lock early
+	// Force SQLite write lock early to prevent IP races
 	if err := txStore.TouchUsersTable(r.Context(), ip); err != nil {
 		httpx.InternalError(w, "cannot lock users table")
 		return
 	}
 
-	limiter := protect.NewAccountPerIPLimiter(
-		h.AccountPerIPLimiter,
-		txStore.CountUsersByIP,
-	)
+	limiter := accountPerIPLimiter{
+		Enable:      h.AccountPerIPLimiter.Enable,
+		MaxAccounts: h.AccountPerIPLimiter.MaxAccounts,
+		CountFn:     txStore.CountUsersByIP,
+	}
 
-	// now this is race-safe
-	ok, err := limiter.Allow(r.Context(), ip)
+	ok, err := limiter.allow(r.Context(), ip)
 	if err != nil {
 		httpx.InternalError(w, "cannot check ip usage")
 		return
@@ -136,4 +144,31 @@ func (h *RegisterHandler) register(
 		"id":       user.ID,
 		"username": user.Username,
 	})
+}
+
+/*
+────────────────────────────────────────────────────────────
+Local helper (domain-level, not a guard)
+────────────────────────────────────────────────────────────
+*/
+
+type accountPerIPLimiter struct {
+	Enable      bool
+	MaxAccounts int
+	CountFn     func(ctx context.Context, ip string) (int64, error)
+}
+
+func (l *accountPerIPLimiter) allow(ctx context.Context, ip string) (bool, error) {
+	if !l.Enable {
+		return true, nil
+	}
+	if l.MaxAccounts <= 0 || ip == "" {
+		return true, nil
+	}
+
+	n, err := l.CountFn(ctx, ip)
+	if err != nil {
+		return false, err
+	}
+	return n < int64(l.MaxAccounts), nil
 }

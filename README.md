@@ -1,6 +1,8 @@
 ## schatzhauser
 
-This is a Go backend (BaaS) to add users and storage to frontend via REST API. KISS, DIY, YAGNI, [DOTADIW](https://dotadiw.com/). Slow down and enjoy Go.
+This is a Go backend to add users and storage to frontend via REST API.
+
+Slow down and enjoy Go.
 
 The following works already (some polishing will continue):
 
@@ -26,9 +28,7 @@ Use the included guards ("middleware") to fight bots:
 
 Go stdlib for routing, SQLite, sqlc v2 with no SQL in the Go code.
 
-See [Architecture](docs/architecture.md) for more details and code organization.
-
-Guards are tricky, see e.g. [Proof of Work](docs/proof_of_work.md) or [Accounts per IP Limiter](docs/accounts_per_ip.md).
+See docs for design decisions and explanation of the tricky bits.
 
 ## Setup/Workflow
 
