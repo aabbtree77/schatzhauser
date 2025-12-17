@@ -1,18 +1,12 @@
 <p align="center">
-  <img src="docs/schatzhauser-banner.png" alt="Schatzhauser" height="220" />
+  <img src="docs/schatzhauser-banner.png" alt="Schatzhauser" style="width: 80%; height: auto;" />
 </p>
 
 <p align="center">
   <em>A small, sharp system with a long memory.</em>
 </p>
 
-## schatzhauser
-
-This is a Go backend to add users and storage to a web frontend.
-
-Slow down and enjoy Go's "net/http" with SQLite and sqlc.
-
-The following works already (some polishing will continue):
+This is a Go backend to add users and storage to a web frontend. Slow down and enjoy Go's "net/http" with SQLite and sqlc:
 
 - [x] register, login/out, profile (a protected route),
 
