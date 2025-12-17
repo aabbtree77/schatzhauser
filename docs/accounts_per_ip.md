@@ -6,7 +6,7 @@ One annoying consequence is that Account-per-IP is not "middleware", it belongs 
 
 A few other examples that mix business domain (handler logic) with early guarding is blacklisting IPs or checking if some seat numbers are exceeded in a ticket issuing system.
 
-There is a way to extend these guards with an extra argument. Inside ./internal/protect/guard.go:
+There is a way to extend these guards with an extra argument. Inside ./internal/guards/guard.go:
 
 ```go
 type Env struct {
@@ -21,7 +21,7 @@ type Guard interface {
 }
 ```
 
-and then the handler code would be
+and then a handler code would be
 
 ```go
 func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +37,7 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
     }
     defer tx.Rollback()
 
-    env := &protect.Env{
+    env := &guard.Env{
         Ctx:   r.Context(),
         DB:    h.DB,
         Tx:    tx,
@@ -57,11 +57,11 @@ func (h *RegisterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 ```
 
-This is still messy and kind of polluting pure middleware with Env. We do not immediately see which guard demands a DB transaction. There is a way to further split guards into "middleware" and those state accessors or even mutators, policy pipelines and all that. The decision taken here is not to go there at all.
+This is still messy and it pollutes middleware with Env. We do not immediately see which guard demands a DB transaction. There is a way to further split guards, consider policy pipelines and all that. Better not to overabstract this.
 
-Any guard/middleware is transaction-free, and anything else is just part of the handler's business logic, see ./internal/handlers/register.go for the imposition of the maximal account number per IP.
+Any guard/middleware is transaction-free, and anything else will be inside handler's business logic, see ./internal/handlers/register.go for the imposition of the maximal account number per IP.
 
-However complex, this is just code organization, now onto the real stuff ;).
+However complex, this is just code organization, now onto the real problems.
 
 ### Modification No. 1
 

@@ -8,13 +8,13 @@ import (
 	"time"
 
 	"github.com/aabbtree77/schatzhauser/db"
+	"github.com/aabbtree77/schatzhauser/internal/guards"
 	"github.com/aabbtree77/schatzhauser/internal/httpx"
-	"github.com/aabbtree77/schatzhauser/internal/protect"
 )
 
 type LoginHandler struct {
 	DB     *sql.DB
-	Guards []protect.Guard
+	Guards []guards.Guard
 }
 
 type LoginInput struct {

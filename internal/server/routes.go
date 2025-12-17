@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/guards"
 	"github.com/aabbtree77/schatzhauser/internal/handlers"
-	"github.com/aabbtree77/schatzhauser/internal/protect"
 )
 
 // RegisterRoutes binds all HTTP routes to the stdlib mux.
@@ -16,35 +16,35 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB, cfg *config.Config) {
 	// Proof of Work (shared)
 	// ────────────────────────────────────────
 
-	powCfg := protect.PowConfig{
+	powCfg := guards.PowConfig{
 		Enable:     cfg.ProofOfWork.Enable,
 		Difficulty: cfg.ProofOfWork.Difficulty,
 		TTL:        cfg.ProofOfWork.TTL(),
 		SecretKey:  cfg.ProofOfWork.DecodedSecretKey,
 	}
 
-	powHandler := protect.NewPoWHandler(powCfg)
+	powHandler := guards.NewPoWHandler(powCfg)
 	mux.Handle("/api/pow/challenge", powHandler)
 
 	// ────────────────────────────────────────
 	// Register
 	// ────────────────────────────────────────
 
-	registerIPR := protect.NewIPRateGuard(protect.IPRateLimiterConfig{
+	registerIPR := guards.NewIPRateGuard(guards.IPRateLimiterConfig{
 		Enable:      cfg.IPRateLimiter.Register.Enable,
 		MaxRequests: cfg.IPRateLimiter.Register.MaxRequests,
 		Window:      cfg.IPRateLimiter.Register.Window(),
 	})
 
-	registerBody := protect.NewBodySizeGuard(
+	registerBody := guards.NewBodySizeGuard(
 		cfg.RBodySizeLimiter.Register.Enable,
 		cfg.RBodySizeLimiter.Register.MaxRBodyBytes,
 	)
 
-	registerGuards := []protect.Guard{
+	registerGuards := []guards.Guard{
 		registerIPR,
 		registerBody,
-		protect.NewPoWGuard(powCfg),
+		guards.NewPoWGuard(powCfg),
 	}
 
 	mux.Handle("/api/register", &handlers.RegisterHandler{
@@ -58,18 +58,18 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB, cfg *config.Config) {
 	// Login
 	// ────────────────────────────────────────
 
-	loginIPR := protect.NewIPRateGuard(protect.IPRateLimiterConfig{
+	loginIPR := guards.NewIPRateGuard(guards.IPRateLimiterConfig{
 		Enable:      cfg.IPRateLimiter.Login.Enable,
 		MaxRequests: cfg.IPRateLimiter.Login.MaxRequests,
 		Window:      cfg.IPRateLimiter.Login.Window(),
 	})
 
-	loginBody := protect.NewBodySizeGuard(
+	loginBody := guards.NewBodySizeGuard(
 		cfg.RBodySizeLimiter.Login.Enable,
 		cfg.RBodySizeLimiter.Login.MaxRBodyBytes,
 	)
 
-	loginGuards := []protect.Guard{
+	loginGuards := []guards.Guard{
 		loginIPR,
 		loginBody,
 	}
@@ -83,13 +83,13 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB, cfg *config.Config) {
 	// Logout
 	// ────────────────────────────────────────
 
-	logoutIPR := protect.NewIPRateGuard(protect.IPRateLimiterConfig{
+	logoutIPR := guards.NewIPRateGuard(guards.IPRateLimiterConfig{
 		Enable:      cfg.IPRateLimiter.Logout.Enable,
 		MaxRequests: cfg.IPRateLimiter.Logout.MaxRequests,
 		Window:      cfg.IPRateLimiter.Logout.Window(),
 	})
 
-	logoutGuards := []protect.Guard{
+	logoutGuards := []guards.Guard{
 		logoutIPR,
 	}
 
@@ -102,13 +102,13 @@ func RegisterRoutes(mux *http.ServeMux, db *sql.DB, cfg *config.Config) {
 	// Profile
 	// ────────────────────────────────────────
 
-	profileIPR := protect.NewIPRateGuard(protect.IPRateLimiterConfig{
+	profileIPR := guards.NewIPRateGuard(guards.IPRateLimiterConfig{
 		Enable:      cfg.IPRateLimiter.Profile.Enable,
 		MaxRequests: cfg.IPRateLimiter.Profile.MaxRequests,
 		Window:      cfg.IPRateLimiter.Profile.Window(),
 	})
 
-	profileGuards := []protect.Guard{
+	profileGuards := []guards.Guard{
 		profileIPR,
 	}
 

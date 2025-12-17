@@ -9,15 +9,15 @@ import (
 
 	"github.com/aabbtree77/schatzhauser/db"
 	"github.com/aabbtree77/schatzhauser/internal/config"
+	"github.com/aabbtree77/schatzhauser/internal/guards"
 	"github.com/aabbtree77/schatzhauser/internal/httpx"
-	"github.com/aabbtree77/schatzhauser/internal/protect"
 )
 
 type RegisterHandler struct {
 	DB *sql.DB
 
 	// Injected request-level guards (PoW, body size, etc.)
-	Guards []protect.Guard
+	Guards []guards.Guard
 
 	// Domain config
 	AccountPerIPLimiter config.AccountPerIPLimiterConfig
@@ -74,7 +74,7 @@ func (h *RegisterHandler) register(
 	r *http.Request,
 	in RegisterInput,
 ) {
-	ip := strings.TrimSpace(protect.GetIP(r))
+	ip := strings.TrimSpace(guards.GetIP(r))
 
 	store := db.NewStore(h.DB)
 

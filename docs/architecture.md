@@ -20,7 +20,7 @@ TD: remove academisms/fluff.
 
   - httpx - x for extras, json/http helpers used by both: handlers and guards.
 
-  - protect - middleware: (i) guards which are easily called by any handler in any sequence, and (ii) domain-level guards such as max account per ip limiter which is not so easy to abstract and chain due to db transactions.
+  - guards - middleware: (i) guards which are easily called by any handler in any sequence, and (ii) domain-level guards such as max account per ip limiter which is not so easy to abstract and chain due to db transactions.
 
   - server/routes.go - this is where all the parameters come from main.go and config/config.go and middleware is assembled, and then passed to each handler.
 
@@ -28,7 +28,7 @@ TD: remove academisms/fluff.
 
 These rules eliminate 80 percent of the mess:
 
-- A guard (protector's common type/interface) is never nil, disabled means inactive, not absent.
+- A guard is never nil, disabled means inactive, not absent.
 
 - Defaults + validation + fatal errors live in config, no paranoid checks elsewhere.
 
@@ -40,7 +40,7 @@ These rules eliminate 80 percent of the mess:
 
 ## More about Middleware (Guards)
 
-This is the code which runs inside a handler before business logic. It is **stateless, synchronous, and in-memory**. To chain/execute them in sequence we put them under a common type `protect.Guard`:
+This is the code which runs inside a handler before business logic. It is **stateless, synchronous, and in-memory**. To chain/execute them in sequence we put them under a common type `guards.Guard`:
 
 ```go
 type Guard interface {
@@ -48,7 +48,7 @@ type Guard interface {
 }
 ```
 
-This lives inside ./internal/protect to break a cycle between ./internal/server/routes.go and ./internal/handlers.
+This lives inside ./internal/guards to break a cycle between ./internal/server/routes.go and ./internal/handlers.
 
 The rest is just Go code. Inside a handler an active guard will emit an HTTP response and return false. The handler exits before business logic via return:
 
@@ -62,18 +62,18 @@ for _, g := range h.Guards {
 
 See ./internal/handlers/register.go as an example.
 
-You will find the following tested guards inside ./internal/protect:
+You will find the following tested guards inside ./internal/guards:
 
-- ip_rate_guard.go – HTTP request rate per ip limiting.
+- ip_rate.go – HTTP request rate per ip limiting.
 
-- body_size_guard.go – request body size cap.
+- body_size.go – request body size cap.
 
-- pow_guard.go – optional [Proof-of-Work](docs/proof_of_work.md) challenge.
+- pow.go – optional [Proof-of-Work](docs/proof_of_work.md) challenge.
 
 ./internal/handlers/register.go also includes the Maximal Accounts per IP limiter,
 
 ```go
-limiter := protect.NewAccountPerIPLimiter(
+limiter := guards.NewAccountPerIPLimiter(
 		h.AccountPerIPLimiter,
 		txStore.CountUsersByIP,
 	)

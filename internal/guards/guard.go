@@ -1,4 +1,4 @@
-package protect
+package guards
 
 import "net/http"
 

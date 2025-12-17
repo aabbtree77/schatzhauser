@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/aabbtree77/schatzhauser/db"
+	"github.com/aabbtree77/schatzhauser/internal/guards"
 	"github.com/aabbtree77/schatzhauser/internal/httpx"
-	"github.com/aabbtree77/schatzhauser/internal/protect"
 )
 
 type ProfileHandler struct {
 	DB     *sql.DB
-	Guards []protect.Guard
+	Guards []guards.Guard
 }
 
 func (h *ProfileHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
