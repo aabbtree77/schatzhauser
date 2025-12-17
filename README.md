@@ -23,6 +23,37 @@ maximal request body size (register, login). Go for [Proof of Work](docs/proof_o
 
 Delve into ./tests and docs for the tricky bits.
 
+## How Everything is Wired, Roughly
+
+```mermaid
+flowchart TD
+    CFG[./config.toml]
+    MAIN[./cmd/main.go]
+    CONF[./internal/config/config.go]
+    ROUTES[./internal/server/routes.go]
+
+    CFG --> MAIN --> CONF --> ROUTES
+
+    subgraph HTTP["HTTP Layer"]
+        GUARDS[./internal/guards]
+        HANDLERS[./internal/handlers]
+        GUARDS --> HANDLERS
+    end
+
+    ROUTES --> GUARDS
+    ROUTES --> HANDLERS
+
+    subgraph DB["Database & Codegen"]
+        DBBOX["./db/migrations<br/>./db/migrations.go<br/>./db/store.go<br/>./db/queries.go"]
+        SQLC[sqlc generate]
+        DBBOX --> SQLC
+    end
+
+    SQLC --> HANDLERS
+```
+
+See [Architecture](docs/architecture.md) for more details.
+
 ## Setup/Workflow
 
 Clone, cd, and run `make all` which should create two binaries inside ./bin: server and god.

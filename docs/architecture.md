@@ -1,5 +1,25 @@
 ## Architecture
 
+### The Big Picture
+
+Each handler runs in its own goroutine, borrows exactly one DB connection for its transaction, and the database - not Go - keeps concurrent handlers from stepping on each other.
+
+Each HTTP request is handled in its own goroutine spun by "net/http". When a handler calls db.BeginTx(...):
+
+- It borrows one connection from the database/sql pool.
+
+- That connection is now exclusively owned by that transaction.
+
+- No other goroutine uses that connection.
+
+- Other requests borrow other connections from the DB pool.
+
+The DB itself enforces: locks, isolation, serialization rules. The Go pool only manages who gets a connection, not update correctness.
+
+If two users register at the same time: two goroutines, two transactions, two connections. The database decides who waits, who retries, who conflicts.
+
+### Code Organization
+
 - ./cmd - entrance points to `server` and `god` (independent user management cli).
 
 - ./data/data.db - SQlite DB. Populate it via REST API or ./bin/god. Tests will directly pollute it, use ./bin/god to clean up.
@@ -16,7 +36,7 @@
 
     - domain_helpers.go related to db, sessions, not json/http stuff.
 
-  - httpx - x for extras, json/http helpers used by both: handlers and guards.
+  - httpx - "x" for extras, json/http helpers used by both: handlers and guards.
 
   - guards - middleware, mostly to fight bots. Guards do not touch DB.
 
@@ -34,9 +54,9 @@ These rules eliminate 80 percent of the mess:
 
 - A guard checks if everything is alright and returns true, or writes an HTTP response and returns false. There is no nil, error handling, panic, and exit maze.
 
-## More about Middleware (Guards)
+### More about Middleware (Guards)
 
-This is ./internal/guards code which runs inside a handler before business logic. It is **synchronous, and in-memory**. To chain/execute the guards in sequence we put them under a common type `guards.Guard`:
+./internal/guards run inside a handler before business logic. They are **synchronous, and in-memory**. To chain/execute the guards in sequence we put them under a common type `guards.Guard`:
 
 ```go
 type Guard interface {
@@ -44,7 +64,7 @@ type Guard interface {
 }
 ```
 
-The package guards breaks a cycle between ./internal/server/routes.go and ./internal/handlers.
+The package _guards_ breaks a cycle between ./internal/server/routes.go and ./internal/handlers.
 
 Inside a handler an active guard will emit an HTTP response and return false. The handler exits before business logic via return:
 
@@ -60,13 +80,13 @@ See ./internal/handlers/register.go as an example.
 
 You will find the following tested guards inside ./internal/guards:
 
-- ip_rate.go – HTTP request rate per ip limiting.
+- ip_rate.go - HTTP request rate per ip limiting.
 
-- body_size.go – request body size cap.
+- body_size.go - request body size cap.
 
-- pow.go – optional [Proof-of-Work](docs/proof_of_work.md) challenge.
+- pow.go - optional [Proof-of-Work](docs/proof_of_work.md) challenge.
 
-./internal/handlers/register.go also includes the Maximal Accounts per IP limiter,
+./internal/handlers/register.go also includes [Maximal Accounts per IP](accounts_per_ip.md),
 
 ```go
 limiter := guards.NewAccountPerIPLimiter(
@@ -75,6 +95,6 @@ limiter := guards.NewAccountPerIPLimiter(
 	)
 ```
 
-It needs to access db via txStore, which runs a transaction controlled by the api/register handler. Treat those stateful guards as a handler's business logic, more details in [Accounts per IP](docs/accounts_per_ip.md) and ./internal/handlers/register.go.
+It needs to access db via txStore, which runs a transaction controlled by the api/register handler. Treat those stateful guards as handler's business logic, details in ./internal/handlers/register.go.
 
 This way we cover (more or less) complex Ruby Rack machinery with basic typed Go code.
