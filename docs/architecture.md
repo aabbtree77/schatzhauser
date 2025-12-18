@@ -2,8 +2,6 @@
 
 ### The Big Picture
 
-Each handler runs in its own goroutine, borrows exactly one DB connection for its transaction, and the database - not Go - keeps concurrent handlers from stepping on each other.
-
 Each HTTP request is handled in its own goroutine spun by "net/http". When a handler calls db.BeginTx(...):
 
 - It borrows one connection from the database/sql pool.
@@ -14,9 +12,7 @@ Each HTTP request is handled in its own goroutine spun by "net/http". When a han
 
 - Other requests borrow other connections from the DB pool.
 
-The DB itself enforces: locks, isolation, serialization rules. The Go pool only manages who gets a connection, not update correctness.
-
-If two users register at the same time: two goroutines, two transactions, two connections. The database decides who waits, who retries, who conflicts.
+The DB itself enforces: locks, isolation, serialization rules. The Go pool only manages who gets a connection. If two users register at the same time: two goroutines, two transactions, two connections. The database decides who waits, who retries, who conflicts.
 
 ### Code Organization
 
@@ -24,12 +20,7 @@ A rough overview:
 
 ```mermaid
 flowchart TD
-    CFG[./config.toml]
-    MAIN[./cmd/main.go]
-    CONF[./internal/config/config.go]
-    ROUTES[./internal/server/routes.go]
-
-    CFG --> MAIN --> CONF --> ROUTES
+    CFGBOX["./config.toml<br/>./cmd/main.go<br/>./internal/config/config.go<br/>./internal/server/routes.go"]
 
     subgraph HTTP["HTTP Layer"]
         GUARDS[./internal/guards]
@@ -37,8 +28,8 @@ flowchart TD
         GUARDS --> HANDLERS
     end
 
-    ROUTES --> GUARDS
-    ROUTES --> HANDLERS
+    CFGBOX --> GUARDS
+    CFGBOX --> HANDLERS
 
     subgraph DB["Database & Codegen"]
         DBBOX["./db/migrations<br/>./db/migrations.go<br/>./db/store.go<br/>./db/queries.go"]
@@ -49,7 +40,7 @@ flowchart TD
     SQLC --> HANDLERS
 ```
 
-More details:
+Details:
 
 - ./cmd - entrance points to `server` and `god` (independent user management cli).
 
@@ -107,8 +98,6 @@ for _, g := range h.Guards {
 }
 ```
 
-See ./internal/handlers/register.go as an example.
-
 You will find the following tested guards inside ./internal/guards:
 
 - ip_rate.go - HTTP request rate per ip limiting.
@@ -126,6 +115,6 @@ limiter := guards.NewAccountPerIPLimiter(
 	)
 ```
 
-It needs to access db via txStore, which runs a transaction controlled by the api/register handler. Treat those stateful guards as handler's business logic, details in ./internal/handlers/register.go.
+It needs to access db via txStore, which runs a transaction controlled by the api/register handler. Treat those stateful guards as handler's business logic.
 
-This way we cover (more or less) complex Ruby Rack machinery with basic typed Go code.
+This way we cover complex Ruby Rack machinery with basic typed Go code.
