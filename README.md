@@ -14,7 +14,7 @@ This is a minimal Go JSON API server (BaaS) to add authenticated users to a SPA 
 
 - God-mode (CLI) for password resets.
 
-- The client is programmatic: curl or ./tests in Go, no frontend.
+- Programmatic client: curl or ./tests in Go, no frontend.
 
 ## API
 
@@ -45,17 +45,17 @@ curl -i -b cookiejar.txt \
 
 ```
 
-Instruments against the bots:
+Instruments against bots:
 
 - maximal request rate per IP (fixed window, in memory),
 
 - maximal request body size,
 
-- [proof of work (PoW)](docs/proof_of_work.md).
+- [proof of work (PoW),](docs/proof_of_work.md)
 
 - [maximal account number per IP](docs/accounts_per_ip.md) (persistent in SQLite).
 
-Delve into ./tests and docs for the tricky bits. See [Architecture](docs/architecture.md) for more details.
+Delve into ./tests and docs for tricky bits. See [Architecture](docs/architecture.md) for more details.
 
 ## Setup/Workflow
 
