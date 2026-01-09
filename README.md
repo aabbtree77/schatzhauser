@@ -3,13 +3,11 @@
 </p>
 
 <p align="center">
-  <em>Authenticated bot-proof JSON API, but still KISS-compatible.</em>
+  <em>Authenticated bot-proof minimal JSON API.</em>
 </p>
 
 This is a minimal Go JSON API server to test ideas to fight bots, in the context of an authenticated web app.
-MIT licensed: self-educate, steal it, reuse it in your own conquest of the world. 
-
-A simple CRUD app is a modern day QFT or string theory. Extremely overcrowded spaces, everybody knows everything, yet very little progress with auth, ddos, reliability, hosting, payments, "components". One ideal is PocketBase, but I want something smaller, more focused and reliable. Ultimately, a concrete running app serving people, not a framework with multiple connectors and adapters.
+It is a cookie-based session auth HTTP server with JSON payloads inside HTTP request bodies. The client is programmatic, either direct curl, or ./tests, no frontend. There is also a CLI to clean up the DB.
 
 ## API
 
@@ -38,25 +36,13 @@ curl -i -b cookiejar.txt \
   -X POST \
   http://localhost:8080/api/logout
 
-``` 
-
-HTTP vs JSON can get confusing, but this is a classical cookie-based session auth HTTP server with JSON payloads inside HTTP request bodies. No JWTs and no SPA (4), but also not enough redirects or textbook HTTP (1). Also more HTTP-first than just JSON (so roughly 2, not enough focus on sending data to be 3):
-
-1. HTTP + cookies + HTML
-
-2. HTTP + cookies + JSON ← you are here
-
-3. HTTP + cookies + HTML + JSON (hybrid)
-
-4. HTTP + tokens + JSON + SPA (complexity cliff)
-
-The client is programmatic, either direct curl, or ./tests, no frontend. There is also CLI to clean up DB.
+```
 
 Instruments against the bots:
 
 - maximal request rate per IP (fixed window, in memory),
 
-- maximal request body size, 
+- maximal request body size,
 
 - [proof of work (PoW)](docs/proof_of_work.md).
 
@@ -177,20 +163,41 @@ Two useful things to take away: (i) graceful shutdown with signal.NotifyContext,
 
 Do "builder design pattern" instead if you must, at least it is some sort of a "standard". I prefer plain Go, see ./internal/config/config.go.
 
+[RealWorld (Conduit)](https://github.com/gothinkster/realworld)
+
+This repo includes a huge number of medium.com clones. They are the most archetypical web apps with auth, users, posts, and comments. Most of them are extremely over architected: go kit, aws dynamoDB, hexagonal architecture, OpenAPI, JWTs... all the wrong ideas there ;).
+
 ## Notes
 
-I am building a web app, some sort of a 3rd-party-free bulletin board, and releasing its stages as separate modules. 
+- If you plan to add browser/frontend to this code, don't do that, better start from scratch, or use, cough cough, some framework. This is just to play with rate limiters and AI. SQLite with sqlc has turned out to be a brilliant idea, something to reuse.
 
-The code such as this one only serves two purposes: (i) to assess/monitor/landmark progress, and (ii) release something self-sufficient of use to others/later me. See docs where some pain point or design decisions are discussed.
+- It is possible to get a reliable no-nonsense Go backend serving HTML/CSS/Js with auth. Server-first (SSR), as little JSON and Js as possible, with proper HTTP status codes and redirects (not entirely clear if this is better than JSON APIs or needed at all). Make everything a flat list of feature folders with a single route.go mapping links to folders via net/http. However, this only leads to a clean backend that does not do much. It is a mistake to assume that frontend will be just a bunch of HTML/Js files one per feature folder, which AI will write in no time. Frontend is where most of the work resides.
 
-There is a bewildering number of ways to implement web apps. See [RealWorld (Conduit)](https://github.com/gothinkster/realworld) repo for a huge number of medium.com clones. They are the most archetypical web apps with auth, users, posts, and comments. Most of them are extremely over architected (go kit, aws dynamoDB, hexagonal architecture, OpenAPI, React Router, JWTs...), but they also provide concrete code for web apps which are complex enough to be interesting, and yet not too complex to be hopeless.
+- The main reason people go for React and Next.js is libraries like shadcn where one can copy/paste components as code, not just styled HTML scaffold like DaisyUI. Forms have logic, async, they are tricky, not just "HTML form here and there". Ignore the multipart form parsing and touch HTTP bodies as streams in a few wrong places on the Go end, and you will hit some spectacular EOF heisenbugs there.
 
-**I am not interested in how things work in general, I want to know how they are implemented.**
+- HTTP is brittle. It will touch Go, HTML, HTML forms, Js in all sorts of weird ways and the codes will seldom show the most important part, who sends what and where. This is what the founding fathers did not do well.
 
-A classical router with session cookies such as the one exhibited here is the closest to KISS and YAGNI at the moment, I think, but bear in mind that everything is a trade off. Classics is easier to debug and understand, but there is so much bureaucracy and friction already that no wonder people are inventing endless shortcuts with services and components. 
+  ```js
+  fetch("/pow/challenge"...)
 
-This code is around 3KLOC which is about a few basic routes, albeit with auth and guards against bots. It already induces pain to remove some property/variable from SQL user data as there is too much dancing between SQL, Go, HTTP request headers and bodies, and tests.
+  fetch(form.action...)
 
-Once the browser frontend is added, there emerges another friction layer between Js/Ts/React and Go which leads to the need to drop JSON or HTTP. To remove confusing "dual mode" communication and energy doubling needed on ./tests and the browser client. The fragility of net/http with streams and body parsing when processing forms becomes apparent, the issue of flickering and first paint... This is the story of my next repo.
+  window.location.href = res.url;
 
+  http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
 
+  <form method="POST" action="/actions/register" novalidate></form>
+
+  w.Header().Set("Cache-Control", "no-store") w.Header().Set("Content-Type",
+  "application/json") \_ = json.NewEncoder(w).Encode(resp)
+
+  <script src="/js/pow.js" defer></script>
+  ```
+
+  A compiler won't help much here. Need to develop some intuition what sends where. F12 is guaranteed.
+
+- Another trap is to assume a classical SSR approach with "React islands" and minimal React as advanced HTML (no SPA router and magic). Potentially using esbuild with Makefile to turn .jsx to .js, removing vite and such build systems which start to dictate architecture and conflict with the Go build system. Eventually all one achieves this way is just rebuilding another vite. Federating those .jsx files is a massive time sink. One self-sufficient .jsx file per feature folder won't work. Its .js will have to include the whole React runtime reaching 200KB in prod, and then each feature folder will multiply this into megabytes. This is why federation/vite is needed.
+
+- First contentful paint, SEO, and similar discussions ditching SPAs are absolute nonsense, premature optimizations at best.
+
+- If we start with React, SPA, JSON APIs, the question becomes, do we actually need Go, does it add value or becomes a friction? TypeScript and Node.js are Disneyland for sure, but we can also use TypeScript just as Go to write a clean backend and vastly reduce friction of having to jump between two languages. This is the main reason Go is so little used in building web apps. A vastly better runtime (compilation to binary to begin with), but unfortunately React holds the cards, paraphrasing DJT ;).
