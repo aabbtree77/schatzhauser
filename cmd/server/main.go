@@ -12,10 +12,10 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	dbpkg "github.com/aabbtree77/schatzhauser/db"
-	"github.com/aabbtree77/schatzhauser/internal/config"
-	"github.com/aabbtree77/schatzhauser/internal/logger"
-	"github.com/aabbtree77/schatzhauser/internal/server"
+	dbpkg "schatzhauser/db"
+	"schatzhauser/internal/config"
+	"schatzhauser/internal/logger"
+	"schatzhauser/internal/server"
 )
 
 func run(ctx context.Context, w io.Writer, args []string) error {

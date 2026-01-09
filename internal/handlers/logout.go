@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/aabbtree77/schatzhauser/db"
-	"github.com/aabbtree77/schatzhauser/internal/guards"
-	"github.com/aabbtree77/schatzhauser/internal/httpx"
+	"schatzhauser/db"
+	"schatzhauser/internal/guards"
+	"schatzhauser/internal/httpx"
 )
 
 type LogoutHandler struct {

@@ -1,4 +1,4 @@
-module github.com/aabbtree77/schatzhauser
+module schatzhauser
 
 go 1.24.0
 

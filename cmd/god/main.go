@@ -15,8 +15,8 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 
-	dbpkg "github.com/aabbtree77/schatzhauser/db"
-	"github.com/aabbtree77/schatzhauser/internal/config"
+	dbpkg "schatzhauser/db"
+	"schatzhauser/internal/config"
 )
 
 func usage() {

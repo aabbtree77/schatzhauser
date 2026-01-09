@@ -12,8 +12,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/internal/config"
-	"github.com/aabbtree77/schatzhauser/internal/logger"
+	"schatzhauser/internal/config"
+	"schatzhauser/internal/logger"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 

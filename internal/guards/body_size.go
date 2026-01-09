@@ -3,7 +3,7 @@ package guards
 import (
 	"net/http"
 
-	"github.com/aabbtree77/schatzhauser/internal/httpx"
+	"schatzhauser/internal/httpx"
 )
 
 //

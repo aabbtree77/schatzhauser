@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/internal/config"
-	"github.com/aabbtree77/schatzhauser/internal/logger"
+	"schatzhauser/internal/config"
+	"schatzhauser/internal/logger"
 )
 
 type TestCase struct {

@@ -3,11 +3,18 @@
 </p>
 
 <p align="center">
-  <em>Authenticated bot-proof minimal JSON API.</em>
+  <em>Authenticated bot-proof JSON API server (BaaS)</em>
 </p>
 
-This is a minimal Go JSON API server to test ideas to fight bots, in the context of an authenticated web app.
-It is a cookie-based session auth HTTP server with JSON payloads inside HTTP request bodies. The client is programmatic, either direct curl, or ./tests, no frontend. There is also a CLI to clean up the DB.
+This is a minimal Go JSON API server (BaaS) to add authenticated users to a SPA (e.g. React-based):
+
+- Transport: HTTP.
+
+- Authentication: username/password with session cookies.
+
+- God-mode (CLI) for password resets.
+
+- The client is programmatic: curl or ./tests in Go, no frontend.
 
 ## API
 
@@ -166,38 +173,3 @@ Do "builder design pattern" instead if you must, at least it is some sort of a "
 [RealWorld (Conduit)](https://github.com/gothinkster/realworld)
 
 This repo includes a huge number of medium.com clones. They are the most archetypical web apps with auth, users, posts, and comments. Most of them are extremely over architected: go kit, aws dynamoDB, hexagonal architecture, OpenAPI, JWTs... all the wrong ideas there ;).
-
-## Notes
-
-- If you plan to add browser/frontend to this code, don't do that, better start from scratch, or use, cough cough, some framework. This is just to play with rate limiters and AI. SQLite with sqlc has turned out to be a brilliant idea, something to reuse.
-
-- It is possible to get a reliable no-nonsense Go backend serving HTML/CSS/Js with auth. Server-first (SSR), as little JSON and Js as possible, with proper HTTP status codes and redirects (not entirely clear if this is better than JSON APIs or needed at all). Make everything a flat list of feature folders with a single route.go mapping links to folders via net/http. However, this only leads to a clean backend that does not do much. It is a mistake to assume that frontend will be just a bunch of HTML/Js files one per feature folder, which AI will write in no time. Frontend is where most of the work resides.
-
-- The main reason people go for React and Next.js is libraries like shadcn where one can copy/paste components as code, not just styled HTML scaffold like DaisyUI. Forms have logic, async, they are tricky, not just "HTML form here and there". Ignore the multipart form parsing and touch HTTP bodies as streams in a few wrong places on the Go end, and you will hit some spectacular EOF heisenbugs there.
-
-- HTTP is brittle. It will touch Go, HTML, HTML forms, Js in all sorts of weird ways and the codes will seldom show the most important part, who sends what and where. This is what the founding fathers did not do well.
-
-  ```js
-  fetch("/pow/challenge"...)
-
-  fetch(form.action...)
-
-  window.location.href = res.url;
-
-  http.Redirect(w, r, "/login?registered=1", http.StatusSeeOther)
-
-  <form method="POST" action="/actions/register" novalidate></form>
-
-  w.Header().Set("Cache-Control", "no-store") w.Header().Set("Content-Type",
-  "application/json") \_ = json.NewEncoder(w).Encode(resp)
-
-  <script src="/js/pow.js" defer></script>
-  ```
-
-  A compiler won't help much here. Need to develop some intuition what sends where. F12 is guaranteed.
-
-- Another trap is to assume a classical SSR approach with "React islands" and minimal React as advanced HTML (no SPA router and magic). Potentially using esbuild with Makefile to turn .jsx to .js, removing vite and such build systems which start to dictate architecture and conflict with the Go build system. Eventually all one achieves this way is just rebuilding another vite. Federating those .jsx files is a massive time sink. One self-sufficient .jsx file per feature folder won't work. Its .js will have to include the whole React runtime reaching 200KB in prod, and then each feature folder will multiply this into megabytes. This is why federation/vite is needed.
-
-- First contentful paint, SEO, and similar discussions ditching SPAs are absolute nonsense, premature optimizations at best.
-
-- If we start with React, SPA, JSON APIs, the question becomes, do we actually need Go, does it add value or becomes a friction? TypeScript and Node.js are Disneyland for sure, but we can also use TypeScript just as Go to write a clean backend and vastly reduce friction of having to jump between two languages. This is the main reason Go is so little used in building web apps. A vastly better runtime (compilation to binary to begin with), but unfortunately React holds the cards, paraphrasing DJT ;).

@@ -9,7 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/db"
+	"schatzhauser/db"
+
 	"golang.org/x/crypto/bcrypt"
 )
 

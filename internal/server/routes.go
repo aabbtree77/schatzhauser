@@ -4,9 +4,9 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/aabbtree77/schatzhauser/internal/config"
-	"github.com/aabbtree77/schatzhauser/internal/guards"
-	"github.com/aabbtree77/schatzhauser/internal/handlers"
+	"schatzhauser/internal/config"
+	"schatzhauser/internal/guards"
+	"schatzhauser/internal/handlers"
 )
 
 // RegisterRoutes binds all HTTP routes to the stdlib mux.

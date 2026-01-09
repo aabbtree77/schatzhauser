@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aabbtree77/schatzhauser/internal/httpx"
+	"schatzhauser/internal/httpx"
 )
 
 //

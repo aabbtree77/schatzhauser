@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/aabbtree77/schatzhauser/db"
-	"github.com/aabbtree77/schatzhauser/internal/config"
-	"github.com/aabbtree77/schatzhauser/internal/guards"
-	"github.com/aabbtree77/schatzhauser/internal/httpx"
+	"schatzhauser/db"
+	"schatzhauser/internal/config"
+	"schatzhauser/internal/guards"
+	"schatzhauser/internal/httpx"
 )
 
 type RegisterHandler struct {

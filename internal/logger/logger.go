@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/aabbtree77/schatzhauser/internal/config"
+	"schatzhauser/internal/config"
 )
 
 var (
