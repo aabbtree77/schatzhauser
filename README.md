@@ -3,10 +3,10 @@
 </p>
 
 <p align="center">
-  <em>Authenticated bot-proof JSON API server (BaaS)</em>
+  <em>Authenticated bot-proof JSON API server</em>
 </p>
 
-This is a minimal Go JSON API server (BaaS) to add authenticated users to a SPA (e.g. React-based):
+This is a minimal Go JSON API server to test guards against bots. It is an early prototype. More complete software is coming soon. For now:
 
 - Transport: HTTP.
 
@@ -172,4 +172,4 @@ Do "builder design pattern" instead if you must, at least it is some sort of a "
 
 [RealWorld (Conduit)](https://github.com/gothinkster/realworld)
 
-This repo includes a huge number of medium.com clones. They are the most archetypical web apps with auth, users, posts, and comments. Most of them are extremely over architected: go kit, aws dynamoDB, hexagonal architecture, OpenAPI, JWTs... all the wrong ideas there ;).
+This repo includes a huge number of medium.com clones. They are the most archetypical web apps with auth, users, posts, and comments. Most of them are over-architected: go kit, aws dynamoDB, hexagonal architecture, OpenAPI, JWTs... all the wrong ideas there ;).
